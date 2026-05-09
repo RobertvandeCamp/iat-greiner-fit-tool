@@ -1,4 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScoreInputForm } from "@/components/ScoreInputForm";
 
 export default function App() {
   return (
@@ -12,7 +13,7 @@ export default function App() {
           <TabsTrigger value="formula">Formula</TabsTrigger>
         </TabsList>
         <TabsContent value="input">
-          <p className="text-muted-foreground">Score input coming in Phase 34.</p>
+          <ScoreInputForm />
         </TabsContent>
         <TabsContent value="results">
           <p className="text-muted-foreground">Results display coming in Phase 34.</p>
