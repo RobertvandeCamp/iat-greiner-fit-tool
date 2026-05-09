@@ -13,15 +13,15 @@ const WEIGHT_MATRIX: Record<string, DimensionWeight[]> = {
   alliances:     [0, 3, 0, 1, 3, 3, 1, 0, 3, 1, 1, 1, 1, 3],
 };
 
-// Targets: PLACEHOLDER values (all zeros)
-// These will be replaced by calibrated values from scripts/calibrate.ts (Plan 02)
+// Targets: calibrated via scripts/calibrate.ts
+// Run: npx tsx scripts/calibrate.ts to regenerate
 const TARGET_MATRIX: Record<string, number[]> = {
-  creativity:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  direction:     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  delegation:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  coordination:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  collaboration: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  alliances:     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  creativity:    [ 1, -3,  0, -2,  0,  1, -1,  0, -3,  0,  0, -1,  0, -2],
+  direction:     [-1,  2, -2,  0,  0,  1,  2,  0,  1, -3,  0,  0, -1, -3],
+  delegation:    [ 0,  0, -3,  3,  0, -1, -1,  0,  2,  0,  0,  2,  0, -2],
+  coordination:  [-2,  3, -2,  0,  0,  0, -1,  0,  1, -3, -1,  0, -1,  0],
+  collaboration: [ 2, -3,  0,  0, -1,  0,  1,  0,  0,  0,  0,  2, -2,  0],
+  alliances:     [ 0, -3,  0, -3,  3, -1,  1,  0, -2,  0,  1,  0, -1,  0],
 };
 
 const PHASE_META: Record<string, { name: string; label: string }> = {
