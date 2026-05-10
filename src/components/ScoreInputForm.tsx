@@ -14,37 +14,32 @@ import { REFERENCE_CANDIDATES } from '@/data/referenceCandidates'
 import type { DimensionScore } from '@/types/greiner'
 
 interface ScoreInputFormProps {
-  onScoresChange?: (scores: Record<string, DimensionScore>) => void
+  scores: Record<string, DimensionScore>
+  onScoresChange: (scores: Record<string, DimensionScore>) => void
 }
 
-const neutralScores: Record<string, DimensionScore> = Object.fromEntries(
-  DIMENSIONS.map((d) => [d.id, 0 as DimensionScore])
-)
-
-export function ScoreInputForm({ onScoresChange }: ScoreInputFormProps) {
-  const [scores, setScores] = useState<Record<string, DimensionScore>>(neutralScores)
+export function ScoreInputForm({ scores, onScoresChange }: ScoreInputFormProps) {
   const [scale, setScale] = useState<'7pt' | '3pt'>('7pt')
   const [preset, setPreset] = useState<string>('custom')
 
   function handleScoreChange(dimensionId: string, value: DimensionScore) {
     const updated = { ...scores, [dimensionId]: value }
-    setScores(updated)
+    onScoresChange(updated)
     setPreset('custom')
-    onScoresChange?.(updated)
   }
 
   function handlePresetChange(presetId: string) {
     if (presetId === 'custom') {
-      setScores({ ...neutralScores })
+      const reset = Object.fromEntries(
+        Object.keys(scores).map((k) => [k, 0 as DimensionScore])
+      ) as Record<string, DimensionScore>
+      onScoresChange(reset)
       setPreset('custom')
-      onScoresChange?.({ ...neutralScores })
     } else {
       const candidate = REFERENCE_CANDIDATES.find((c) => c.id === presetId)
       if (candidate) {
-        const newScores = { ...candidate.scores } as Record<string, DimensionScore>
-        setScores(newScores)
+        onScoresChange({ ...candidate.scores } as Record<string, DimensionScore>)
         setPreset(presetId)
-        onScoresChange?.(newScores)
       }
     }
   }
