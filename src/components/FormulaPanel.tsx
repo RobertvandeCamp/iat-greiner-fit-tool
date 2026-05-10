@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { WorkedExample } from '@/components/WorkedExample'
 import { ClassificationBadge } from '@/components/ClassificationBadge'
 
@@ -57,14 +58,14 @@ export function FormulaPanel() {
           </p>
           <div className="grid grid-cols-2 gap-2 mt-3 max-w-xs">
             {THRESHOLDS.map(({ fitPercent, classification, label }) => (
-              <>
-                <div key={`badge-${classification}`}>
+              <Fragment key={classification}>
+                <div>
                   <ClassificationBadge fitPercent={fitPercent} classification={classification} />
                 </div>
-                <div key={`label-${classification}`} className="text-sm self-center">
+                <div className="text-sm self-center">
                   {label}
                 </div>
-              </>
+              </Fragment>
             ))}
           </div>
         </section>

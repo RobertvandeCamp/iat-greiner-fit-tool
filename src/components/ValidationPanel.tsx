@@ -37,11 +37,12 @@ export function ValidationPanel() {
       )}
 
       <div className="space-y-3">
-        {candidateResults.map(({ candidate, results }) => (
+        {candidateResults.map(({ candidate, results, passed }) => (
           <CandidateValidation
             key={candidate.id}
             candidate={candidate}
             results={results}
+            passed={passed}
           />
         ))}
       </div>

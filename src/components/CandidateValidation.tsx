@@ -8,17 +8,15 @@ import type { CandidateProfile, FitResult } from '@/types/greiner'
 interface CandidateValidationProps {
   candidate: CandidateProfile
   results: FitResult[]  // sorted by fitPercent desc from computeAllPhases
+  passed: boolean
 }
 
-export function CandidateValidation({ candidate, results }: CandidateValidationProps) {
+export function CandidateValidation({ candidate, results, passed }: CandidateValidationProps) {
   // Sort expected rankings by rank ascending (rank 1 = best fit first)
   const expectedOrder = [...candidate.expectedRankings].sort((a, b) => a.rank - b.rank)
 
   // Computed order from results array position (already sorted by fitPercent desc)
   const computedOrder = results.map((r) => r.phaseId)
-
-  // Pass if all phaseIds appear in the same order
-  const passed = expectedOrder.every((exp, i) => exp.phaseId === computedOrder[i])
 
   return (
     <Card>
