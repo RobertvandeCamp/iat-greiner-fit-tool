@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoreInputForm } from "@/components/ScoreInputForm";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import { ValidationPanel } from "@/components/ValidationPanel";
+import { FormulaPanel } from "@/components/FormulaPanel";
 import type { DimensionScore } from "@/types/greiner";
 import { DIMENSIONS } from "@/data/dimensions";
 
@@ -33,7 +34,7 @@ export default function App() {
           <ValidationPanel />
         </TabsContent>
         <TabsContent value="formula">
-          <p className="text-muted-foreground">Formula transparency coming in Phase 36.</p>
+          <FormulaPanel />
         </TabsContent>
       </Tabs>
     </div>
