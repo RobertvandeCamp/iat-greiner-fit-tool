@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoreInputForm } from "@/components/ScoreInputForm";
 import { ResultsPanel } from "@/components/ResultsPanel";
+import { ValidationPanel } from "@/components/ValidationPanel";
 import type { DimensionScore } from "@/types/greiner";
 import { DIMENSIONS } from "@/data/dimensions";
 
@@ -29,7 +30,7 @@ export default function App() {
           <ResultsPanel scores={scores} />
         </TabsContent>
         <TabsContent value="validation">
-          <p className="text-muted-foreground">Validation tab coming in Phase 36.</p>
+          <ValidationPanel />
         </TabsContent>
         <TabsContent value="formula">
           <p className="text-muted-foreground">Formula transparency coming in Phase 36.</p>
