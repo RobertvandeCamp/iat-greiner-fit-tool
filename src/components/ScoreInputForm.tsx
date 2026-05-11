@@ -45,6 +45,13 @@ export function ScoreInputForm({ scores, onScoresChange }: ScoreInputFormProps) 
   }
 
   return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+        Enter the candidate&apos;s Reveal-14 IAT dimension scores below. These scores measure implicit
+        personality associations across 14 trait dimensions, ranging from one pole (e.g. Analytical)
+        to the opposite (e.g. Intuitive). Load a reference candidate preset to see example data,
+        or enter scores manually.
+      </p>
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -84,5 +91,6 @@ export function ScoreInputForm({ scores, onScoresChange }: ScoreInputFormProps) 
         ))}
       </CardContent>
     </Card>
+    </div>
   )
 }

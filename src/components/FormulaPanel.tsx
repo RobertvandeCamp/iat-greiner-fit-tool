@@ -12,7 +12,15 @@ const THRESHOLDS: { fitPercent: number; classification: 'Strong' | 'Usable' | 'R
 export function FormulaPanel() {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">How Scoring Works</h2>
+      <div>
+        <h2 className="text-xl font-semibold">How Scoring Works</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-1 max-w-2xl">
+          For full transparency, this section explains exactly how fit percentages are calculated.
+          The scoring uses weighted distance-based similarity: each Greiner phase has target scores
+          and dimension weights (Critical, Supporting, or Neutral). The closer a candidate&apos;s
+          IAT scores are to the phase targets on the important dimensions, the higher the fit.
+        </p>
+      </div>
 
       <div className="space-y-8">
 

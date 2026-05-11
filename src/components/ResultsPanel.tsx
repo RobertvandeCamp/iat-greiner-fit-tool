@@ -31,7 +31,15 @@ export function ResultsPanel({ scores }: ResultsPanelProps) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Phase Fit Results</h2>
+      <div>
+        <h2 className="text-xl font-semibold">Phase Fit Results</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-1 max-w-2xl">
+          Each of Greiner&apos;s six growth phases demands a different leadership personality.
+          The fit percentage shows how closely the candidate&apos;s IAT profile matches the ideal
+          personality for each phase &mdash; from Creativity (startup agility) through Alliances
+          (external partnerships). Expand a phase card to see which dimensions drive the score.
+        </p>
+      </div>
 
       {/* Chart: hidden on mobile, visible sm+ */}
       <div className="hidden sm:block">
