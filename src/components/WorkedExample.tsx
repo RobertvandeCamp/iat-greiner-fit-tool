@@ -3,36 +3,63 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { computePhaseFit } from '@/engine/scoringEngine'
+import { computePhaseFit, computeAllPhases } from '@/engine/scoringEngine'
 import { PHASE_NORMS } from '@/data/phaseNorms'
 import { SCALING_PARAMS } from '@/data/scalingParams'
 import { REFERENCE_CANDIDATES } from '@/data/referenceCandidates'
 import { DIMENSIONS } from '@/data/dimensions'
 import { ClassificationBadge } from '@/components/ClassificationBadge'
+import type { DimensionScore } from '@/types/greiner'
 
-export function WorkedExample() {
+interface WorkedExampleProps {
+  scores: Record<string, DimensionScore>
+}
+
+export function WorkedExample({ scores }: WorkedExampleProps) {
   const [open, setOpen] = useState(false)
 
-  const result = useMemo(() => {
-    const k1 = REFERENCE_CANDIDATES[0]
-    const creativityNorm = PHASE_NORMS.find(p => p.phaseId === 'creativity')!
-    return computePhaseFit(k1.scores, creativityNorm, SCALING_PARAMS)
-  }, [])
+  const allZero = Object.values(scores).every((v) => v === 0)
+
+  const { result, label, isLive } = useMemo(() => {
+    if (allZero) {
+      // Fall back to K1 / Creativity
+      const k1 = REFERENCE_CANDIDATES[0]
+      const creativityNorm = PHASE_NORMS.find(p => p.phaseId === 'creativity')!
+      return {
+        result: computePhaseFit(k1.scores, creativityNorm, SCALING_PARAMS),
+        label: `${k1.name} \u2014 Creativity phase`,
+        isLive: false,
+      }
+    }
+    // Use current scores, pick best-fitting phase
+    const results = computeAllPhases(scores, PHASE_NORMS, SCALING_PARAMS)
+    const top = results[0]
+    const topNorm = PHASE_NORMS.find(p => p.phaseId === top.phaseId)!
+    return {
+      result: computePhaseFit(scores, topNorm, SCALING_PARAMS),
+      label: `Your scores \u2014 ${top.phaseName} phase (best fit)`,
+      isLive: true,
+    }
+  }, [scores, allZero])
 
   const similaritySum = result.dimensionDetails.reduce((s, d) => s + d.similarity, 0)
   const weightSum = result.dimensionDetails.reduce((s, d) => s + d.weight, 0)
   const fitPercentRaw = SCALING_PARAMS.a * result.rawFit - SCALING_PARAMS.b
 
+  const triggerText = open
+    ? `Hide worked example`
+    : `Show worked example: ${label}`
+
   return (
-    <Card>
+    <Card className={isLive ? 'border-primary/30' : undefined}>
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger asChild>
           <CardHeader
             className="cursor-pointer flex flex-row items-center justify-between py-3 px-6"
-            aria-label={open ? 'Hide worked example' : 'Show worked example: K1 — Creativity phase'}
+            aria-label={triggerText}
           >
             <span className="font-medium text-base">
-              {open ? 'Hide worked example' : 'Show worked example: K1 — Creativity phase'}
+              {triggerText}
             </span>
             <ChevronDown
               className={cn(
@@ -44,6 +71,12 @@ export function WorkedExample() {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <CardContent className="pt-0 px-6 pb-4">
+            {!isLive && (
+              <p className="text-xs text-muted-foreground mb-3">
+                No scores entered yet &mdash; showing reference candidate K1.
+                Enter scores in the Score Input tab to see your own calculation here.
+              </p>
+            )}
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-muted-foreground text-xs border-b border-border">

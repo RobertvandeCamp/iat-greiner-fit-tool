@@ -40,7 +40,7 @@ export default function App() {
           <ValidationPanel />
         </TabsContent>
         <TabsContent value="formula">
-          <FormulaPanel />
+          <FormulaPanel scores={scores} />
         </TabsContent>
       </Tabs>
     </div>
