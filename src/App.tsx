@@ -23,23 +23,12 @@ export default function App() {
         a candidate&apos;s personality fits each of Greiner&apos;s six organisational growth phases.
       </p>
 
-      {/* Step flow */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-6 flex-wrap">
-        <span className="inline-flex items-center gap-1"><span className="rounded-full bg-primary text-primary-foreground w-5 h-5 flex items-center justify-center text-[10px] font-semibold">1</span> Enter scores</span>
-        <span className="text-border">&rarr;</span>
-        <span className="inline-flex items-center gap-1"><span className="rounded-full bg-primary text-primary-foreground w-5 h-5 flex items-center justify-center text-[10px] font-semibold">2</span> View fit results</span>
-        <span className="text-border">&rarr;</span>
-        <span className="inline-flex items-center gap-1"><span className="rounded-full bg-primary text-primary-foreground w-5 h-5 flex items-center justify-center text-[10px] font-semibold">3</span> Validate accuracy</span>
-        <span className="text-border">&rarr;</span>
-        <span className="inline-flex items-center gap-1"><span className="rounded-full bg-primary text-primary-foreground w-5 h-5 flex items-center justify-center text-[10px] font-semibold">4</span> Understand formula</span>
-      </div>
-
       <Tabs defaultValue="input">
         <TabsList className="mb-4">
-          <TabsTrigger value="input">Score Input</TabsTrigger>
-          <TabsTrigger value="results">Results</TabsTrigger>
-          <TabsTrigger value="validation">Validation</TabsTrigger>
-          <TabsTrigger value="formula">Formula</TabsTrigger>
+          <TabsTrigger value="input" className="gap-1.5"><span className="rounded-full bg-primary text-primary-foreground w-4 h-4 flex items-center justify-center text-[10px] font-semibold leading-none">1</span> Score Input</TabsTrigger>
+          <TabsTrigger value="results" className="gap-1.5"><span className="rounded-full bg-primary text-primary-foreground w-4 h-4 flex items-center justify-center text-[10px] font-semibold leading-none">2</span> Results</TabsTrigger>
+          <TabsTrigger value="validation" className="gap-1.5"><span className="rounded-full bg-primary text-primary-foreground w-4 h-4 flex items-center justify-center text-[10px] font-semibold leading-none">3</span> Validation</TabsTrigger>
+          <TabsTrigger value="formula" className="gap-1.5"><span className="rounded-full bg-primary text-primary-foreground w-4 h-4 flex items-center justify-center text-[10px] font-semibold leading-none">4</span> Formula</TabsTrigger>
         </TabsList>
         <TabsContent value="input">
           <ScoreInputForm scores={scores} onScoresChange={setScores} />
