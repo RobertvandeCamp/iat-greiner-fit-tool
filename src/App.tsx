@@ -13,6 +13,7 @@ const neutralScores: Record<string, DimensionScore> = Object.fromEntries(
 
 export default function App() {
   const [scores, setScores] = useState<Record<string, DimensionScore>>(neutralScores);
+  const [preset, setPreset] = useState('custom');
 
   return (
     <div className="container py-8">
@@ -31,7 +32,7 @@ export default function App() {
           <TabsTrigger value="formula" className="gap-1.5"><span className="rounded-full bg-primary text-primary-foreground w-4 h-4 flex items-center justify-center text-[10px] font-semibold leading-none">4</span> Formula</TabsTrigger>
         </TabsList>
         <TabsContent value="input">
-          <ScoreInputForm scores={scores} onScoresChange={setScores} />
+          <ScoreInputForm scores={scores} onScoresChange={setScores} preset={preset} onPresetChange={setPreset} />
         </TabsContent>
         <TabsContent value="results">
           <ResultsPanel scores={scores} />

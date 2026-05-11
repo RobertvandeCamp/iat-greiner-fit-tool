@@ -16,16 +16,17 @@ import type { DimensionScore } from '@/types/greiner'
 interface ScoreInputFormProps {
   scores: Record<string, DimensionScore>
   onScoresChange: (scores: Record<string, DimensionScore>) => void
+  preset: string
+  onPresetChange: (preset: string) => void
 }
 
-export function ScoreInputForm({ scores, onScoresChange }: ScoreInputFormProps) {
+export function ScoreInputForm({ scores, onScoresChange, preset, onPresetChange }: ScoreInputFormProps) {
   const [scale, setScale] = useState<'7pt' | '3pt'>('7pt')
-  const [preset, setPreset] = useState<string>('custom')
 
   function handleScoreChange(dimensionId: string, value: DimensionScore) {
     const updated = { ...scores, [dimensionId]: value }
     onScoresChange(updated)
-    setPreset('custom')
+    onPresetChange('custom')
   }
 
   function handlePresetChange(presetId: string) {
@@ -34,12 +35,12 @@ export function ScoreInputForm({ scores, onScoresChange }: ScoreInputFormProps) 
         Object.keys(scores).map((k) => [k, 0 as DimensionScore])
       ) as Record<string, DimensionScore>
       onScoresChange(reset)
-      setPreset('custom')
+      onPresetChange('custom')
     } else {
       const candidate = REFERENCE_CANDIDATES.find((c) => c.id === presetId)
       if (candidate) {
         onScoresChange({ ...candidate.scores } as Record<string, DimensionScore>)
-        setPreset(presetId)
+        onPresetChange(presetId)
       }
     }
   }
