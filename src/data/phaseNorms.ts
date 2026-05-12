@@ -13,15 +13,15 @@ const WEIGHT_MATRIX: Record<string, DimensionWeight[]> = {
   alliances:     [0, 3, 0, 1, 3, 3, 1, 0, 3, 1, 1, 1, 1, 3],
 };
 
-// Targets: calibrated via scripts/calibrate.ts
-// Run: npx tsx scripts/calibrate.ts to regenerate
+// THEORY-LOCKED: These targets are from Marco's Excel (Phase_Norms Doelscore). Never modify via calibration.
 const TARGET_MATRIX: Record<string, number[]> = {
-  creativity:    [ 1, -3,  0, -2,  0,  1, -1,  0, -3,  0,  0, -1,  0, -2],
-  direction:     [-1,  2, -2,  0,  0,  1,  2,  0,  1, -3,  0,  0, -1, -3],
-  delegation:    [ 0,  0, -3,  3,  0, -1, -1,  0,  2,  0,  0,  2,  0, -2],
-  coordination:  [-2,  3, -2,  0,  0,  0, -1,  0,  1, -3, -1,  0, -1,  0],
-  collaboration: [ 2, -3,  0,  0, -1,  0,  1,  0,  0,  0,  0,  2, -2,  0],
-  alliances:     [ 0, -3,  0, -3,  3, -1,  1,  0, -2,  0,  1,  0, -1,  0],
+  //                D01  D02  D03  D04  D05  D06  D07  D08  D09  D10  D11  D12  D13  D14
+  creativity:    [  3,  -1,  -3,  -1,   0,  -1,  -1,   2,  -3,   0,   1,   1,  -3,  -2],
+  direction:     [ -2,  -1,  -2,  -3,   0,  -1,  -1,  -2,   1,  -1,   0,  -1,   1,   2],
+  delegation:    [  0,   0,  -2,   0,  -1,   1,  -2,  -1,  -1,  -2,  -2,   1,   0,  -1],
+  coordination:  [ -3,   2,   0,   0,   0,   0,   1,  -3,   3,  -2,  -1,  -2,   3,   3],
+  collaboration: [  0,  -1,   0,   0,  -1,   1,   1,   1,  -3,  -2,  -2,   2,  -2,  -3],
+  alliances:     [  0,  -3,   0,  -1,  -3,  -3,   1,   0,  -3,  -2,  -1,   2,  -1,  -3],
 };
 
 const PHASE_META: Record<string, { name: string; label: string }> = {
