@@ -26,8 +26,10 @@ export function validateCandidate(
 ): ValidationResult {
   const computedResults = computeAllPhases(candidate.scores, phaseNorms, scalingParams);
 
-  // Check ranking order: compare the phaseId order of computed vs expected
-  const computedOrder = computedResults.map(r => r.phaseId);
+  // Check ranking order: sort computed by fitPercent desc, compare against expected
+  const computedOrder = [...computedResults]
+    .sort((a, b) => b.fitPercent - a.fitPercent)
+    .map(r => r.phaseId);
   const expectedOrder = [...candidate.expectedRankings]
     .sort((a, b) => a.rank - b.rank)
     .map(e => e.phaseId);

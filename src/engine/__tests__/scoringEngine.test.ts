@@ -29,13 +29,13 @@ describe('classify', () => {
 });
 
 describe('computeAllPhases', () => {
-  it('returns 6 results sorted by fitPercent descending', () => {
+  it('returns 6 results in Excel phase order (not sorted by fit)', () => {
     const k1 = REFERENCE_CANDIDATES.find(c => c.id === 'K1')!;
     const results = computeAllPhases(k1.scores, PHASE_NORMS, SCALING_PARAMS);
     expect(results).toHaveLength(6);
-    for (let i = 1; i < results.length; i++) {
-      expect(results[i - 1].fitPercent).toBeGreaterThanOrEqual(results[i].fitPercent);
-    }
+    expect(results.map(r => r.phaseId)).toEqual([
+      'creativity', 'direction', 'delegation', 'coordination', 'collaboration', 'alliances',
+    ]);
   });
 
   it('produces fitPercent values between 0 and 100', () => {
@@ -56,7 +56,7 @@ describe('K1 ranking order', () => {
   it('matches: Creativity > Collaboration > Delegation > Alliances > Direction > Coordination', () => {
     const k1 = REFERENCE_CANDIDATES.find(c => c.id === 'K1')!;
     const results = computeAllPhases(k1.scores, PHASE_NORMS, SCALING_PARAMS);
-    const ranking = results.map(r => r.phaseId);
+    const ranking = [...results].sort((a, b) => b.fitPercent - a.fitPercent).map(r => r.phaseId);
     expect(ranking).toEqual(['creativity', 'collaboration', 'delegation', 'alliances', 'direction', 'coordination']);
   });
 });
@@ -65,7 +65,7 @@ describe('K2 ranking order', () => {
   it('matches: Creativity > Delegation > Collaboration > Direction > Alliances > Coordination', () => {
     const k2 = REFERENCE_CANDIDATES.find(c => c.id === 'K2')!;
     const results = computeAllPhases(k2.scores, PHASE_NORMS, SCALING_PARAMS);
-    const ranking = results.map(r => r.phaseId);
+    const ranking = [...results].sort((a, b) => b.fitPercent - a.fitPercent).map(r => r.phaseId);
     expect(ranking).toEqual(['creativity', 'delegation', 'collaboration', 'direction', 'alliances', 'coordination']);
   });
 });
@@ -74,7 +74,7 @@ describe('K3 ranking order', () => {
   it('matches: Delegation > Direction > Collaboration > Creativity > Coordination > Alliances', () => {
     const k3 = REFERENCE_CANDIDATES.find(c => c.id === 'K3')!;
     const results = computeAllPhases(k3.scores, PHASE_NORMS, SCALING_PARAMS);
-    const ranking = results.map(r => r.phaseId);
+    const ranking = [...results].sort((a, b) => b.fitPercent - a.fitPercent).map(r => r.phaseId);
     expect(ranking).toEqual(['delegation', 'direction', 'collaboration', 'creativity', 'coordination', 'alliances']);
   });
 });

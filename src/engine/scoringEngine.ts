@@ -52,6 +52,5 @@ export function computeAllPhases(
   scalingParams: ScalingParams,
 ): FitResult[] {
   return phaseNorms
-    .map(norm => computePhaseFit(scores, norm, scalingParams))
-    .sort((a, b) => b.fitPercent - a.fitPercent);
+    .map(norm => computePhaseFit(scores, norm, scalingParams));
 }
