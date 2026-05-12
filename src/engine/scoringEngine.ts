@@ -1,45 +1,58 @@
-import { DimensionScore, DimensionDetail, FitResult, PhaseNorm, ScalingParams } from '@/types/greiner';
+import { DimensionId, DimensionScore, DimensionDetail, FitResult, PhaseNorm } from '@/types/greiner';
 import { classify } from '@/engine/classifier';
 
+/**
+ * Compute direction-based alignment for a single dimension.
+ *
+ * - target != 0: alignment = (score * target + 3) / 6
+ * - target == 0: alignment = 1 - abs(score) / 3
+ *
+ * Result is in [0, 1].
+ */
+function dimensionAlignment(score: DimensionScore, target: number): number {
+  if (target !== 0) {
+    return (score * target + 3) / 6;
+  }
+  return 1 - Math.abs(score) / 3;
+}
+
 export function computePhaseFit(
-  scores: Record<string, DimensionScore>,
+  scores: Record<DimensionId, DimensionScore>,
   phaseNorm: PhaseNorm,
-  scalingParams: ScalingParams,
 ): FitResult {
-  let similaritySum = 0;
-  let weightSum = 0;
+  let sumContributions = 0;
+  let sumImportances = 0;
   const dimensionDetails: DimensionDetail[] = [];
 
   for (const dim of phaseNorm.dimensions) {
-    const candidateScore = scores[dim.dimensionId] ?? 0 as DimensionScore;
-    const distance = Math.abs(candidateScore - dim.target);
+    const candidateScore = (scores[dim.dimensionId] ?? 0) as DimensionScore;
+    const importance = Math.abs(dim.spec.numeric);
+    const alignment = dimensionAlignment(candidateScore, dim.spec.target);
 
-    let similarity = 0;
-    if (dim.weight > 0) {
-      similarity = (1 - distance / 6) * dim.weight;
-      similaritySum += similarity;
-      weightSum += dim.weight;
+    let contribution = 0;
+    if (importance !== 0) {
+      contribution = importance * alignment;
+      sumContributions += contribution;
+      sumImportances += importance;
     }
 
     dimensionDetails.push({
       dimensionId: dim.dimensionId,
-      candidateScore: candidateScore as DimensionScore,
-      target: dim.target,
-      weight: dim.weight,
-      distance,
-      similarity,
+      candidateScore,
+      target: dim.spec.target,
+      importance,
+      alignment,
+      contribution,
     });
   }
 
-  const rawFit = weightSum > 0 ? similaritySum / weightSum : 0;
-  const fitPercentRaw = scalingParams.a * rawFit - scalingParams.b;
-  const fitPercent = Math.round(Math.max(0, Math.min(100, fitPercentRaw)));
+  const rawRatio = sumImportances > 0 ? sumContributions / sumImportances : 0;
+  const fitPercent = Math.round(Math.max(0, Math.min(100, rawRatio * 100)));
   const classification = classify(fitPercent);
 
   return {
     phaseId: phaseNorm.phaseId,
     phaseName: phaseNorm.phaseName,
-    rawFit,
     fitPercent,
     classification,
     dimensionDetails,
@@ -47,10 +60,8 @@ export function computePhaseFit(
 }
 
 export function computeAllPhases(
-  scores: Record<string, DimensionScore>,
+  scores: Record<DimensionId, DimensionScore>,
   phaseNorms: PhaseNorm[],
-  scalingParams: ScalingParams,
 ): FitResult[] {
-  return phaseNorms
-    .map(norm => computePhaseFit(scores, norm, scalingParams));
+  return phaseNorms.map(norm => computePhaseFit(scores, norm));
 }
