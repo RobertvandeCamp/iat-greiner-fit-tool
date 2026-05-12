@@ -14,8 +14,8 @@ interface PhaseCardProps {
 export function PhaseCard({ result }: PhaseCardProps) {
   const [open, setOpen] = useState(false)
 
-  // Sort: weight 3 (Critical) first, then 1 (Supporting), then 0 (Neutral)
-  const sortedDetails = [...result.dimensionDetails].sort((a, b) => b.weight - a.weight)
+  // Sort: highest importance first, then by contribution desc
+  const sortedDetails = [...result.dimensionDetails].sort((a, b) => b.importance - a.importance || b.contribution - a.contribution)
 
   return (
     <Card>
@@ -48,30 +48,33 @@ export function PhaseCard({ result }: PhaseCardProps) {
                   <th className="text-left py-1">Dimension</th>
                   <th className="text-right py-1">Score</th>
                   <th className="text-right py-1">Target</th>
-                  <th className="text-right py-1">Similarity</th>
+                  <th className="text-right py-1">Importance</th>
+                  <th className="text-right py-1">Alignment</th>
+                  <th className="text-right py-1">Contribution</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedDetails.map((detail) => {
                   const dim = DIMENSIONS.find((d) => d.id === detail.dimensionId)
-                  const maxSimilarity = detail.weight === 3 ? 3.0 : detail.weight === 1 ? 1.0 : 0
-                  const fillPercent = maxSimilarity > 0 ? (detail.similarity / maxSimilarity) * 100 : 0
+                  const maxContribution = detail.importance > 0 ? detail.importance : 0
+                  const fillPercent = maxContribution > 0 ? (detail.contribution / maxContribution) * 100 : 0
 
                   return (
                     <tr
                       key={detail.dimensionId}
                       className={cn(
                         'border-b border-border last:border-0',
-                        detail.weight === 0 && 'text-muted-foreground'
+                        detail.importance === 0 && 'text-muted-foreground'
                       )}
-                      title={detail.weight === 0 ? 'Neutral — does not contribute to fit score' : undefined}
+                      title={detail.importance === 0 ? 'Neutral — does not contribute to fit score' : undefined}
                     >
                       <td className="py-1.5 pr-2">{dim?.shortLabel ?? detail.dimensionId}</td>
                       <td className="text-right py-1.5">{detail.candidateScore}</td>
                       <td className="text-right py-1.5">{detail.target}</td>
+                      <td className="text-right py-1.5">{detail.importance}</td>
                       <td className="text-right py-1.5">
                         <div className="flex items-center justify-end gap-2">
-                          <span>{detail.similarity.toFixed(2)}</span>
+                          <span>{detail.alignment.toFixed(2)}</span>
                           <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
                               className="h-full bg-primary rounded-full"
@@ -80,6 +83,7 @@ export function PhaseCard({ result }: PhaseCardProps) {
                           </div>
                         </div>
                       </td>
+                      <td className="text-right py-1.5">{detail.contribution.toFixed(2)}</td>
                     </tr>
                   )
                 })}

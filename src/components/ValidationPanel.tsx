@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { computeAllPhases } from '@/engine/scoringEngine'
 import { PHASE_NORMS } from '@/data/phaseNorms'
-import { SCALING_PARAMS } from '@/data/scalingParams'
 import { REFERENCE_CANDIDATES } from '@/data/referenceCandidates'
 import { CandidateValidation } from '@/components/CandidateValidation'
 
@@ -9,7 +8,7 @@ export function ValidationPanel() {
   const candidateResults = useMemo(
     () =>
       REFERENCE_CANDIDATES.map((candidate) => {
-        const results = computeAllPhases(candidate.scores, PHASE_NORMS, SCALING_PARAMS)
+        const results = computeAllPhases(candidate.scores, PHASE_NORMS)
         const expectedOrder = [...candidate.expectedRankings]
           .sort((a, b) => a.rank - b.rank)
           .map((e) => e.phaseId)

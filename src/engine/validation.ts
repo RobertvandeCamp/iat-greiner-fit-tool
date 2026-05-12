@@ -1,4 +1,4 @@
-import { CandidateProfile, FitResult, PhaseNorm, ScalingParams } from '@/types/greiner';
+import { CandidateProfile, FitResult, PhaseNorm } from '@/types/greiner';
 import { computeAllPhases } from '@/engine/scoringEngine';
 import { REFERENCE_CANDIDATES } from '@/data/referenceCandidates';
 
@@ -22,9 +22,8 @@ export interface FullValidationResult {
 export function validateCandidate(
   candidate: CandidateProfile,
   phaseNorms: PhaseNorm[],
-  scalingParams: ScalingParams,
 ): ValidationResult {
-  const computedResults = computeAllPhases(candidate.scores, phaseNorms, scalingParams);
+  const computedResults = computeAllPhases(candidate.scores, phaseNorms);
 
   // Check ranking order: sort computed by fitPercent desc, compare against expected
   const computedOrder = [...computedResults]
@@ -58,9 +57,8 @@ export function validateCandidate(
 export function validateAllCandidates(
   candidates: CandidateProfile[],
   phaseNorms: PhaseNorm[],
-  scalingParams: ScalingParams,
 ): FullValidationResult {
-  const results = candidates.map(c => validateCandidate(c, phaseNorms, scalingParams));
+  const results = candidates.map(c => validateCandidate(c, phaseNorms));
   const allRankingsMatch = results.every(r => r.rankingMatch);
   const classificationMatchCount = results.reduce((sum, r) => sum + r.classificationMatches, 0);
   const totalClassifications = results.reduce((sum, r) => sum + r.totalPhases, 0);
