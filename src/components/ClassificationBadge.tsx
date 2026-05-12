@@ -8,10 +8,10 @@ interface ClassificationBadgeProps {
 }
 
 const BADGE_CLASSES: Record<Classification, string> = {
-  Strong: 'bg-green-100 text-green-800 border-green-200',
-  Usable: 'bg-blue-100 text-blue-800 border-blue-200',
-  Risk: 'bg-amber-100 text-amber-800 border-amber-200',
-  Mismatch: 'bg-red-100 text-red-800 border-red-200',
+  'Sterke fit': 'bg-green-100 text-green-800 border-green-200',
+  'Goede fit':  'bg-blue-100 text-blue-800 border-blue-200',
+  'Risicofit':  'bg-amber-100 text-amber-800 border-amber-200',
+  'Mismatch':   'bg-red-100 text-red-800 border-red-200',
 }
 
 export function ClassificationBadge({ fitPercent, classification }: ClassificationBadgeProps) {

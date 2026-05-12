@@ -1,10 +1,9 @@
 import { useMemo } from 'react'
 import { computeAllPhases } from '@/engine/scoringEngine'
 import { PHASE_NORMS } from '@/data/phaseNorms'
-import { SCALING_PARAMS } from '@/data/scalingParams'
 import { PhaseRankingChart } from '@/components/PhaseRankingChart'
 import { PhaseCard } from '@/components/PhaseCard'
-import type { DimensionScore } from '@/types/greiner'
+import type { DimensionScore, DimensionId } from '@/types/greiner'
 
 interface ResultsPanelProps {
   scores: Record<string, DimensionScore>
@@ -14,7 +13,7 @@ export function ResultsPanel({ scores }: ResultsPanelProps) {
   const allZero = Object.values(scores).every((v) => v === 0)
 
   const results = useMemo(
-    () => computeAllPhases(scores, PHASE_NORMS, SCALING_PARAMS),
+    () => computeAllPhases(scores as Record<DimensionId, DimensionScore>, PHASE_NORMS),
     [scores]
   )
 
