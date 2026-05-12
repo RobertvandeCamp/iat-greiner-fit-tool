@@ -1,14 +1,5 @@
 import { GreinerPhase, DimensionId, PhaseDimensionSpec, PhaseNorm, DimensionNorm } from '@/types/greiner';
 
-// Qualitative to numeric mapping from v2 spec
-export const QUALITATIVE_TO_NUMERIC: Record<string, number> = {
-  '++': 3,
-  '+': 2,
-  '0': 0,
-  '-': -2,
-  '--': -4,
-};
-
 // All 84 phase-dimension entries from v2 spec (6 phases x 14 dimensions)
 export const PHASE_DIMENSION_WEIGHTS: Record<GreinerPhase, Record<DimensionId, PhaseDimensionSpec>> = {
   Creativity: {

@@ -1,4 +1,4 @@
-import { DimensionDef, DimensionId } from '@/types/greiner';
+import { DimensionDef } from '@/types/greiner';
 
 export const DIMENSIONS: DimensionDef[] = [
   { id: 'analytical_intuitive',      index: 0,  leftTrait: 'Analytical Thinking',          rightTrait: 'Intuitive Thinking',          shortLabel: 'Analytical vs Intuitive' },
@@ -17,19 +17,4 @@ export const DIMENSIONS: DimensionDef[] = [
   { id: 'open_principled',           index: 13, leftTrait: 'Flexibility & Open-Mindedness', rightTrait: 'Principled Consistency',      shortLabel: 'Open vs Principled' },
 ];
 
-export const DIMENSION_IDS: DimensionId[] = [
-  'analytical_intuitive',
-  'conceptual_practical',
-  'decisive_deliberate',
-  'assertive_reflective',
-  'sociable_reserved',
-  'persuasive_dialogue',
-  'performance_sustainable',
-  'careful_flexible',
-  'adaptive_consistent',
-  'stable_expressive',
-  'collaborative_independent',
-  'integrity_contextual',
-  'innovative_structured',
-  'open_principled',
-];
+
