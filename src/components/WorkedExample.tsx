@@ -33,7 +33,7 @@ export function WorkedExample({ scores }: WorkedExampleProps) {
     // Use current scores, pick best-fitting phase
     const typedScores = scores as Record<DimensionId, DimensionScore>
     const results = computeAllPhases(typedScores, PHASE_NORMS)
-    const top = results[0]
+    const top = [...results].sort((a, b) => b.fitPercent - a.fitPercent)[0]
     const topNorm = PHASE_NORMS.find(p => p.phaseId === top.phaseId)!
     return {
       result: computePhaseFit(typedScores, topNorm),

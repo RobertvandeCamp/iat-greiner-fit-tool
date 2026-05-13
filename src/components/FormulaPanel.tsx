@@ -22,7 +22,7 @@ export function FormulaPanel({ scores }: FormulaPanelProps) {
   const topResult = useMemo(() => {
     if (allZero) return null
     const results = computeAllPhases(scores as Record<DimensionId, DimensionScore>, PHASE_NORMS)
-    return results[0]
+    return [...results].sort((a, b) => b.fitPercent - a.fitPercent)[0]
   }, [scores, allZero])
 
   const liveStats = useMemo(() => {

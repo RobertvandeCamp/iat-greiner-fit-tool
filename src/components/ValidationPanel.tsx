@@ -12,7 +12,7 @@ export function ValidationPanel() {
         const expectedOrder = [...candidate.expectedRankings]
           .sort((a, b) => a.rank - b.rank)
           .map((e) => e.phaseId)
-        const computedOrder = results.map((r) => r.phaseId)
+        const computedOrder = [...results].sort((a, b) => b.fitPercent - a.fitPercent).map((r) => r.phaseId)
         const passed = expectedOrder.every((id, i) => id === computedOrder[i])
         return { candidate, results, passed }
       }),
