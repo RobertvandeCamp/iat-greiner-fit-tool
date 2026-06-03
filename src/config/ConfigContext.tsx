@@ -92,12 +92,53 @@ interface ConfigContextValue {
 
 const ConfigContext = createContext<ConfigContextValue | null>(null);
 
+/**
+ * Repair only the "soft" fields (bands + penalty) of an otherwise structurally
+ * sound config: clamp the penalty to 0..1, clamp/round band mins to 0..100,
+ * drop duplicate mins, and force a min-0 catch-all. Used on reload so a band
+ * the editor left invalid does NOT discard the valuable phase calibration.
+ */
+function repairSoftFields(parsed: ModelConfig): ModelConfig {
+  const cfg: ModelConfig = { ...parsed };
+  if (cfg.scoring && Number.isFinite(cfg.scoring.wrongPolePenalty)) {
+    cfg.scoring = { ...cfg.scoring, wrongPolePenalty: Math.max(0, Math.min(1, cfg.scoring.wrongPolePenalty)) };
+  }
+  if (Array.isArray(cfg.bands)) {
+    const seen = new Set<number>();
+    let bands: ClassificationBand[] = cfg.bands
+      .filter((b) => b && Number.isFinite(b.min) && typeof b.label === 'string')
+      .map((b) => ({ min: Math.max(0, Math.min(100, Math.round(b.min))), label: b.label }))
+      .filter((b) => {
+        if (seen.has(b.min)) return false;
+        seen.add(b.min);
+        return true;
+      });
+    if (bands.length > 0 && !bands.some((b) => b.min === 0)) {
+      const lowestIdx = bands.reduce((mi, b, i, arr) => (b.min < arr[mi].min ? i : mi), 0);
+      const seen2 = new Set<number>();
+      bands = bands
+        .map((b, i) => (i === lowestIdx ? { ...b, min: 0 } : b))
+        .filter((b) => {
+          if (seen2.has(b.min)) return false;
+          seen2.add(b.min);
+          return true;
+        });
+    }
+    cfg.bands = bands;
+  }
+  return cfg;
+}
+
 function loadInitial(): ModelConfig {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const result = validateConfig(JSON.parse(raw));
-      if (result.ok) return result.config;
+      const parsed = JSON.parse(raw);
+      const direct = validateConfig(parsed);
+      if (direct.ok) return direct.config;
+      // Salvage: fix only the soft band/penalty fields, keep phase calibration.
+      const repaired = validateConfig(repairSoftFields(parsed as ModelConfig));
+      if (repaired.ok) return repaired.config;
     }
   } catch {
     /* ignore corrupt storage */
@@ -159,7 +200,8 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     a.href = url;
     a.download = 'greiner-config.json';
     a.click();
-    URL.revokeObjectURL(url);
+    // Defer revoke so the browser can start the download first.
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   }, [config]);
 
   const importConfig = useCallback((json: string): { ok: boolean; error?: string } => {
