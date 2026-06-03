@@ -7,17 +7,18 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import type { FitResult, Classification } from '@/types/greiner'
+import type { FitResult } from '@/types/greiner'
 
 interface PhaseRankingChartProps {
   results: FitResult[]
 }
 
-const CLASSIFICATION_COLORS: Record<Classification, { fill: string; stroke: string }> = {
-  'Sterke fit': { fill: '#dcfce7', stroke: '#166534' },
-  'Goede fit':  { fill: '#dbeafe', stroke: '#1e40af' },
-  'Risicofit':  { fill: '#fef3c7', stroke: '#92400e' },
-  'Mismatch':   { fill: '#fee2e2', stroke: '#991b1b' },
+/** Colour by percentage band, independent of the configurable label text. */
+function colorFor(value: number): { fill: string; stroke: string } {
+  if (value >= 75) return { fill: '#dcfce7', stroke: '#166534' }
+  if (value >= 55) return { fill: '#dbeafe', stroke: '#1e40af' }
+  if (value >= 40) return { fill: '#fef3c7', stroke: '#92400e' }
+  return { fill: '#fee2e2', stroke: '#991b1b' }
 }
 
 export function PhaseRankingChart({ results }: PhaseRankingChartProps) {
@@ -47,8 +48,8 @@ export function PhaseRankingChart({ results }: PhaseRankingChartProps) {
             {data.map((entry, index) => (
               <Cell
                 key={index}
-                fill={CLASSIFICATION_COLORS[entry.classification as Classification].fill}
-                stroke={CLASSIFICATION_COLORS[entry.classification as Classification].stroke}
+                fill={colorFor(entry.value).fill}
+                stroke={colorFor(entry.value).stroke}
                 strokeWidth={1}
               />
             ))}

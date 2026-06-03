@@ -1,38 +1,33 @@
-import { Fragment, useMemo } from 'react'
+import { useMemo } from 'react'
 import { WorkedExample } from '@/components/WorkedExample'
 import { ClassificationBadge } from '@/components/ClassificationBadge'
 import { computeAllPhases } from '@/engine/scoringEngine'
-import { PHASE_NORMS } from '@/data/phaseNorms'
-import type { DimensionScore, DimensionId, Classification } from '@/types/greiner'
-
-const THRESHOLDS: { fitPercent: number; classification: Classification; label: string }[] = [
-  { fitPercent: 80, classification: 'Sterke fit', label: '>= 75%' },
-  { fitPercent: 60, classification: 'Goede fit',  label: '>= 55%' },
-  { fitPercent: 45, classification: 'Risicofit',  label: '>= 40%' },
-  { fitPercent: 20, classification: 'Mismatch',   label: '< 40%' },
-]
+import { PHASE_ORDER } from '@/data/defaultConfig'
+import { useConfig } from '@/config/ConfigContext'
+import type { DimensionScore, DimensionId } from '@/types/greiner'
 
 interface FormulaPanelProps {
   scores: Record<string, DimensionScore>
 }
 
+const code = 'block text-xs font-mono bg-muted px-1.5 py-0.5 rounded'
+
 export function FormulaPanel({ scores }: FormulaPanelProps) {
+  const { config } = useConfig()
   const allZero = Object.values(scores).every((v) => v === 0)
 
   const topResult = useMemo(() => {
     if (allZero) return null
-    const results = computeAllPhases(scores as Record<DimensionId, DimensionScore>, PHASE_NORMS)
+    const results = computeAllPhases(scores as Record<DimensionId, DimensionScore>, config, PHASE_ORDER)
     return [...results].sort((a, b) => b.fitPercent - a.fitPercent)[0]
-  }, [scores, allZero])
+  }, [scores, allZero, config])
 
   const liveStats = useMemo(() => {
     if (!topResult) return null
-    const details = topResult.dimensionDetails
-    const activeDetails = details.filter(d => d.importance > 0)
-    const exampleDim = activeDetails[0]
-    const sumContributions = details.reduce((s, d) => s + d.contribution, 0)
-    const sumImportances = details.reduce((s, d) => s + d.importance, 0)
-    return { exampleDim, sumContributions, sumImportances }
+    const active = topResult.dimensionDetails.filter((d) => d.weight > 0)
+    const sumWeightedFit = active.reduce((s, d) => s + d.contribution, 0)
+    const sumWeights = active.reduce((s, d) => s + d.weight, 0)
+    return { example: active[0], sumWeightedFit, sumWeights }
   }, [topResult])
 
   return (
@@ -40,121 +35,81 @@ export function FormulaPanel({ scores }: FormulaPanelProps) {
       <div>
         <h2 className="text-xl font-semibold">How Scoring Works</h2>
         <p className="text-sm text-muted-foreground leading-relaxed mt-1 max-w-2xl">
-          For full transparency, this section explains how fit percentages are calculated.
-          The v2 scoring uses direction-based alignment: each Greiner phase specifies a target
-          direction (-1, 0, or +1) and importance weight for every dimension. The closer a
-          candidate scores to the target direction with higher importance, the higher the fit.
+          The model scores demands&ndash;abilities fit: each phase defines a target pole and weight per
+          dimension. Per-dimension fit is a transparent distance-to-target, aggregated as a weighted mean
+          and normalized to a percentage. All parameters are editable in Model Configuration.
         </p>
         {topResult && (
           <p className="text-sm text-primary font-medium mt-2">
-            Showing live values for your best-fitting phase: {topResult.phaseName}
+            Showing live values for the best-fitting phase: {topResult.phaseName}
           </p>
         )}
       </div>
 
       <div className="space-y-8">
-
         <section>
-          <h3 className="font-semibold text-base mb-2">Step 1: Alignment per Dimension</h3>
-          <p className="text-sm leading-relaxed text-foreground mb-2">
-            For each dimension, compute how aligned the candidate&apos;s score is with the phase target
-            direction. When the target is non-zero, alignment is linear from 0 to 1.
-            When the target is 0 (midpoint preferred), perfect score is 0, worst is ±3.
+          <h3 className="font-semibold text-base mb-2">Step 1: Per-dimension fit (distance to target)</h3>
+          <p className="text-sm leading-relaxed mb-2">
+            For each dimension, measure how close the candidate score <code>s</code> is to the phase
+            target <code>t</code> on the 6-point span. Optionally subtract a wrong-pole penalty when the
+            candidate sits on the opposite pole.
           </p>
-          <div className="space-y-1">
-            <code className="block text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
-              if target &ne; 0: alignment = (score &times; target + 3) / 6
-            </code>
-            <code className="block text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
-              if target = 0: alignment = 1 &minus; |score| / 3
-            </code>
-          </div>
-          {topResult && liveStats?.exampleDim && (
-            <div className="mt-3 rounded border border-border bg-muted/50 px-3 py-2 text-xs space-y-0.5">
-              <p className="font-medium text-foreground">Your scores &mdash; {topResult.phaseName}</p>
-              <p className="text-muted-foreground">
-                e.g. {liveStats.exampleDim.dimensionId}: score={liveStats.exampleDim.candidateScore}, target={liveStats.exampleDim.target}
-                {' '}&rarr; alignment = {liveStats.exampleDim.alignment.toFixed(3)}
-              </p>
+          <code className={code}>g = 1 &minus; |s &minus; t| / 6</code>
+          <code className={code}>if penalty &gt; 0 and opposite pole: g = g &minus; penalty &times; (wrongPoleAmount / 3)</code>
+          {liveStats?.example && (
+            <div className="mt-3 rounded border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              e.g. {liveStats.example.dimensionId}: s={liveStats.example.candidateScore}, t={liveStats.example.target} &rarr; fit = {liveStats.example.fit.toFixed(3)}
             </div>
           )}
         </section>
 
         <section>
-          <h3 className="font-semibold text-base mb-2">Step 2: Weighted Contribution</h3>
-          <p className="text-sm leading-relaxed text-foreground mb-2">
-            Multiply alignment by the dimension&apos;s importance (|numeric weight|). Neutral dimensions
-            (importance = 0) contribute nothing. Sum all contributions and all importances.
+          <h3 className="font-semibold text-base mb-2">Step 2: Weighted mean (active dimensions)</h3>
+          <p className="text-sm leading-relaxed mb-2">
+            Weight each fit by its tier (Critical = 3, Supporting = 1). Neutral dimensions (0) are
+            excluded from both the sum and the divisor.
           </p>
-          <div className="space-y-1">
-            <code className="block text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
-              contribution = importance &times; alignment &nbsp;(0 if importance = 0)
-            </code>
-            <code className="block text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
-              raw ratio = sum(contributions) / sum(importances)
-            </code>
-          </div>
-          {topResult && liveStats && (
-            <div className="mt-3 rounded border border-border bg-muted/50 px-3 py-2 text-xs space-y-0.5">
-              <p className="font-medium text-foreground">Your scores &mdash; {topResult.phaseName}</p>
-              <p className="text-muted-foreground">
-                sum contributions = {liveStats.sumContributions.toFixed(3)}, sum importances = {liveStats.sumImportances}
-              </p>
-              <p className="text-muted-foreground">
-                raw ratio = {liveStats.sumContributions.toFixed(3)} / {liveStats.sumImportances} = {(liveStats.sumContributions / liveStats.sumImportances).toFixed(4)}
-              </p>
+          <code className={code}>raw = &Sigma;(weight &times; fit) / &Sigma; weight</code>
+          {liveStats && (
+            <div className="mt-3 rounded border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              raw = {liveStats.sumWeightedFit.toFixed(3)} / {liveStats.sumWeights} = {(liveStats.sumWeightedFit / liveStats.sumWeights).toFixed(4)}
             </div>
           )}
         </section>
 
         <section>
-          <h3 className="font-semibold text-base mb-2">Step 3: Fit Percentage</h3>
-          <p className="text-sm leading-relaxed text-foreground mb-2">
-            Convert the raw ratio to a percentage. No OLS scaling — direct normalization only.
-            Result is clamped to the 0-100 range.
+          <h3 className="font-semibold text-base mb-2">Step 3: Normalize to a percentage</h3>
+          <p className="text-sm leading-relaxed mb-2">
+            With floor normalization on, rescale against the phase&apos;s theoretical worst case so 0% =
+            maximally opposed, 100% = exact target. Off = raw &times; 100.
           </p>
-          <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
-            fit% = round(raw ratio &times; 100)
-          </code>
-          {topResult && liveStats && (
-            <div className="mt-3 rounded border border-border bg-muted/50 px-3 py-2 text-xs space-y-0.5">
-              <p className="font-medium text-foreground">Your scores &mdash; {topResult.phaseName}</p>
-              <p className="text-muted-foreground">
-                round({(liveStats.sumContributions / liveStats.sumImportances).toFixed(4)} &times; 100) = {topResult.fitPercent}%
-              </p>
+          <code className={code}>fit% = clamp((raw &minus; floor) / (1 &minus; floor) &times; 100, 0, 100)</code>
+          {topResult && (
+            <div className="mt-3 rounded border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              floor = {topResult.floor.toFixed(4)} &rarr; fit% = {topResult.fitPercent}%
             </div>
           )}
         </section>
 
         <section>
-          <h3 className="font-semibold text-base mb-2">Step 4: Classification Thresholds</h3>
-          <p className="text-sm leading-relaxed text-foreground mb-2">
-            The final fit percentage is classified into one of four categories:
-          </p>
-          <div className="grid grid-cols-2 gap-2 mt-3 max-w-xs">
-            {THRESHOLDS.map(({ fitPercent, classification, label }) => (
-              <Fragment key={classification}>
-                <div>
-                  <ClassificationBadge fitPercent={fitPercent} classification={classification} />
-                </div>
-                <div className="text-sm self-center">
-                  {label}
-                </div>
-              </Fragment>
+          <h3 className="font-semibold text-base mb-2">Step 4: Classification</h3>
+          <p className="text-sm leading-relaxed mb-2">The fit % is labelled using the configurable bands:</p>
+          <div className="grid grid-cols-2 gap-2 mt-2 max-w-xs">
+            {[...config.bands].sort((a, b) => b.min - a.min).map((b) => (
+              <div key={b.label} className="contents">
+                <div><ClassificationBadge fitPercent={b.min + 1} classification={b.label} /></div>
+                <div className="text-sm self-center">&ge; {b.min}%</div>
+              </div>
             ))}
           </div>
           {topResult && (
-            <div className="mt-3 rounded border border-border bg-muted/50 px-3 py-2 text-xs space-y-0.5">
-              <p className="font-medium text-foreground">Your scores &mdash; {topResult.phaseName}</p>
-              <p className="flex items-center gap-2 text-muted-foreground">
-                {topResult.fitPercent}% &rarr; <ClassificationBadge fitPercent={topResult.fitPercent} classification={topResult.classification} />
-              </p>
+            <div className="mt-3 rounded border border-border bg-muted/50 px-3 py-2 text-xs flex items-center gap-2 text-muted-foreground">
+              {topResult.fitPercent}% &rarr; <ClassificationBadge fitPercent={topResult.fitPercent} classification={topResult.classification} />
             </div>
           )}
         </section>
 
         <WorkedExample scores={scores} />
-
       </div>
     </div>
   )

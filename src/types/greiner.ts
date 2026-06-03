@@ -1,4 +1,4 @@
-/** Score on -3 to +3 scale */
+/** Score on -3 to +3 scale (7-point: displayed as 1..7 = score + 4) */
 export type DimensionScore = -3 | -2 | -1 | 0 | 1 | 2 | 3;
 
 /** Greiner Growth Model phase names */
@@ -27,76 +27,101 @@ export type DimensionId =
   | 'innovative_structured'
   | 'open_principled';
 
-/** Qualitative weight from v2 spec: ++ strong preference, + preference, 0 neutral, - contra, -- strong contra */
-export type V2Qualitative = '++' | '+' | '0' | '-' | '--';
+/** Weight tier. Values are fixed; only the per-dimension assignment is variable. */
+export type WeightTier = 'Critical' | 'Supporting' | 'Neutral';
 
-/** Target direction: -1 = negative pole optimal, 0 = midpoint optimal, +1 = positive pole optimal */
-export type V2Target = -1 | 0 | 1;
+/** Fixed numeric value of each weight tier. */
+export const WEIGHT_VALUES: Record<WeightTier, number> = {
+  Critical: 3,
+  Supporting: 1,
+  Neutral: 0,
+};
 
-/** Per-phase per-dimension specification from v2 spec */
-export interface PhaseDimensionSpec {
-  qualitative: V2Qualitative;
-  numeric: 3 | 2 | 0 | -2 | -4;
-  target: V2Target;
+/** Editable per-phase, per-dimension config cell. */
+export interface PhaseDimensionConfig {
+  /** Target pole/strength the phase demands, -3..+3. */
+  target: DimensionScore;
+  /** Trait-activation relevance tier. */
+  weight: WeightTier;
+  /** Free-text justification (literature rationale). */
+  rationale: string;
 }
 
-/** One dimension definition */
+/** Complete editable config for one Greiner phase. */
+export interface PhaseConfig {
+  phaseId: GreinerPhase;
+  phaseName: string;
+  phaseLabel: string;
+  /** True for Phase 6 (Alliances) — no Greiner table, theory-extrapolated. */
+  extrapolated?: boolean;
+  dimensions: Record<DimensionId, PhaseDimensionConfig>;
+}
+
+/** One classification band. `min` is the inclusive lower bound in fit %. */
+export interface ClassificationBand {
+  min: number;
+  label: string;
+}
+
+/** Tunable scoring options. */
+export interface ScoringOptions {
+  /**
+   * Wrong-pole penalty, 0..1. 0 = symmetric distance-to-target.
+   * Higher values subtract extra fit credit when the candidate sits on the
+   * opposite pole from the target (proportional to how far past neutral).
+   */
+  wrongPolePenalty: number;
+  /**
+   * When true, normalize each phase's raw fit against that phase's theoretical
+   * floor (worst-possible profile) so 0% = maximally opposed, 100% = exact target.
+   */
+  floorNormalize: boolean;
+}
+
+/** The full, editable model configuration. */
+export interface ModelConfig {
+  version: number;
+  phases: Record<GreinerPhase, PhaseConfig>;
+  bands: ClassificationBand[];
+  scoring: ScoringOptions;
+}
+
+/** One dimension definition (static metadata). */
 export interface DimensionDef {
   id: DimensionId;
   index: number;       // 0-13
-  leftTrait: string;   // e.g. "Analytical Thinking"
-  rightTrait: string;  // e.g. "Intuitive Thinking"
+  leftTrait: string;   // negative-pole trait (score -3)
+  rightTrait: string;  // positive-pole trait (score +3)
   shortLabel: string;  // e.g. "Analytical vs Intuitive"
 }
 
-/** Per-dimension norm for a single phase */
-export interface DimensionNorm {
-  dimensionId: DimensionId;
-  spec: PhaseDimensionSpec;
-}
+/** Classification label (text comes from the active band set). */
+export type Classification = string;
 
-/** Complete norm profile for one Greiner phase */
-export interface PhaseNorm {
-  phaseId: GreinerPhase;
-  phaseName: string;     // "Creativity", "Direction", etc.
-  phaseLabel: string;    // Longer description e.g. "Creativity -- Speed & Innovation"
-  dimensions: DimensionNorm[];  // Always 14 entries
-}
-
-/** Classification labels in Dutch per v2 spec */
-export type Classification = 'Sterke fit' | 'Goede fit' | 'Risicofit' | 'Mismatch';
-
-/** Scoring result for one phase */
-export interface FitResult {
-  phaseId: GreinerPhase;
-  phaseName: string;
-  fitPercent: number;    // 0-100, computed as round(raw/max*100)
-  classification: Classification;
-  dimensionDetails: DimensionDetail[];
-}
-
-/** Per-dimension breakdown within a phase fit calculation */
+/** Per-dimension breakdown within a phase fit calculation. */
 export interface DimensionDetail {
   dimensionId: DimensionId;
   candidateScore: DimensionScore;
-  target: V2Target;
-  importance: number;    // abs(numeric weight)
-  alignment: number;     // 0-1, direction-based alignment score
-  contribution: number;  // importance * alignment
+  target: DimensionScore;
+  weightTier: WeightTier;
+  weight: number;        // WEIGHT_VALUES[weightTier]
+  baseFit: number;       // symmetric distance fit, 0..1
+  wrongPole: boolean;    // candidate on opposite pole of a non-zero target
+  fit: number;           // penalized fit, 0..1
+  contribution: number;  // weight * fit
 }
 
-/** A candidate profile with scores and expected results */
-export interface CandidateProfile {
-  id: string;
-  name: string;
-  scores: Record<DimensionId, DimensionScore>;
-  expectedRankings: ExpectedRanking[];
-}
-
-/** Expected phase ranking for validation */
-export interface ExpectedRanking {
+/** Scoring result for one phase. */
+export interface FitResult {
   phaseId: GreinerPhase;
-  rank: number;          // 1 = best fit
-  expectedPercent: number;
-  expectedClassification: Classification;
+  phaseName: string;
+  phaseLabel: string;
+  extrapolated: boolean;
+  fitPercent: number;    // 0-100
+  classification: Classification;
+  rawRatio: number;      // weighted-mean fit before floor-normalization
+  floor: number;         // theoretical floor used for normalization (0 if disabled)
+  /** Critical dimensions where the candidate is on the opposite pole. */
+  criticalMismatches: DimensionId[];
+  dimensionDetails: DimensionDetail[];
 }
