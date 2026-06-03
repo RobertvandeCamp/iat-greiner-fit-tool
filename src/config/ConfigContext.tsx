@@ -6,10 +6,57 @@ import {
   PhaseDimensionConfig,
   ClassificationBand,
   ScoringOptions,
+  WeightTier,
 } from '@/types/greiner';
-import { cloneDefaultConfig } from '@/data/defaultConfig';
+import { cloneDefaultConfig, PHASE_ORDER } from '@/data/defaultConfig';
+import { DIMENSIONS } from '@/data/dimensions';
 
 const STORAGE_KEY = 'greiner-config-v1';
+
+const WEIGHT_TIERS: WeightTier[] = ['Critical', 'Supporting', 'Neutral'];
+
+/**
+ * Validate a parsed object as a complete, well-formed ModelConfig.
+ * Rejects anything that could crash scoring or produce NaN: every phase and
+ * every dimension must be present with an in-range integer target and a valid
+ * weight tier; bands and scoring must be well-typed.
+ */
+function validateConfig(c: unknown): { ok: true; config: ModelConfig } | { ok: false; error: string } {
+  if (!c || typeof c !== 'object') return { ok: false, error: 'Not an object' };
+  const cfg = c as Partial<ModelConfig>;
+
+  if (!cfg.phases || typeof cfg.phases !== 'object') return { ok: false, error: 'Missing phases' };
+  for (const phaseId of PHASE_ORDER) {
+    const phase = (cfg.phases as Record<string, unknown>)[phaseId];
+    if (!phase || typeof phase !== 'object') return { ok: false, error: `Missing phase: ${phaseId}` };
+    const dims = (phase as { dimensions?: Record<string, unknown> }).dimensions;
+    if (!dims || typeof dims !== 'object') return { ok: false, error: `Phase ${phaseId} missing dimensions` };
+    for (const dim of DIMENSIONS) {
+      const cell = dims[dim.id] as Partial<PhaseDimensionConfig> | undefined;
+      if (!cell || typeof cell !== 'object') return { ok: false, error: `${phaseId}.${dim.id} missing` };
+      if (!Number.isInteger(cell.target) || (cell.target as number) < -3 || (cell.target as number) > 3) {
+        return { ok: false, error: `${phaseId}.${dim.id} target must be an integer -3..3` };
+      }
+      if (!WEIGHT_TIERS.includes(cell.weight as WeightTier)) {
+        return { ok: false, error: `${phaseId}.${dim.id} weight invalid` };
+      }
+    }
+  }
+
+  if (!Array.isArray(cfg.bands) || cfg.bands.length === 0) return { ok: false, error: 'Missing/empty bands' };
+  for (const b of cfg.bands) {
+    if (typeof b?.min !== 'number' || typeof b?.label !== 'string') {
+      return { ok: false, error: 'Each band needs numeric min and string label' };
+    }
+  }
+
+  const s = cfg.scoring as Partial<ScoringOptions> | undefined;
+  if (!s || typeof s.wrongPolePenalty !== 'number' || typeof s.floorNormalize !== 'boolean') {
+    return { ok: false, error: 'scoring needs numeric wrongPolePenalty and boolean floorNormalize' };
+  }
+
+  return { ok: true, config: cfg as ModelConfig };
+}
 
 interface ConfigContextValue {
   config: ModelConfig;
@@ -29,8 +76,8 @@ function loadInitial(): ModelConfig {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as ModelConfig;
-      if (parsed && parsed.phases && parsed.bands && parsed.scoring) return parsed;
+      const result = validateConfig(JSON.parse(raw));
+      if (result.ok) return result.config;
     }
   } catch {
     /* ignore corrupt storage */
@@ -96,16 +143,16 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   }, [config]);
 
   const importConfig = useCallback((json: string): { ok: boolean; error?: string } => {
+    let parsed: unknown;
     try {
-      const parsed = JSON.parse(json) as ModelConfig;
-      if (!parsed?.phases || !parsed?.bands || !parsed?.scoring) {
-        return { ok: false, error: 'Missing phases, bands or scoring' };
-      }
-      setConfig(parsed);
-      return { ok: true };
+      parsed = JSON.parse(json);
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : 'Invalid JSON' };
     }
+    const result = validateConfig(parsed);
+    if (!result.ok) return { ok: false, error: result.error };
+    setConfig(result.config);
+    return { ok: true };
   }, []);
 
   const value = useMemo(

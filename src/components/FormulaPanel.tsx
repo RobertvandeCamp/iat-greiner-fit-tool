@@ -27,7 +27,8 @@ export function FormulaPanel({ scores }: FormulaPanelProps) {
     const active = topResult.dimensionDetails.filter((d) => d.weight > 0)
     const sumWeightedFit = active.reduce((s, d) => s + d.contribution, 0)
     const sumWeights = active.reduce((s, d) => s + d.weight, 0)
-    return { example: active[0], sumWeightedFit, sumWeights }
+    const raw = sumWeights > 0 ? sumWeightedFit / sumWeights : 0
+    return { example: active[0], sumWeightedFit, sumWeights, raw }
   }, [topResult])
 
   return (
@@ -72,7 +73,7 @@ export function FormulaPanel({ scores }: FormulaPanelProps) {
           <code className={code}>raw = &Sigma;(weight &times; fit) / &Sigma; weight</code>
           {liveStats && (
             <div className="mt-3 rounded border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-              raw = {liveStats.sumWeightedFit.toFixed(3)} / {liveStats.sumWeights} = {(liveStats.sumWeightedFit / liveStats.sumWeights).toFixed(4)}
+              raw = {liveStats.sumWeightedFit.toFixed(3)} / {liveStats.sumWeights} = {liveStats.raw.toFixed(4)}
             </div>
           )}
         </section>
