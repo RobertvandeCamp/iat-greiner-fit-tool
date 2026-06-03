@@ -3,7 +3,10 @@ import { DimensionSlider } from '@/components/DimensionSlider'
 import { ScaleToggle } from '@/components/ScaleToggle'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { DIMENSIONS } from '@/data/dimensions'
+import { REFERENCE_PROFILES } from '@/data/referenceProfiles'
 import type { DimensionScore } from '@/types/greiner'
+
+const btnCls = 'text-sm px-3 py-1.5 rounded border border-input bg-background hover:bg-muted transition-colors'
 
 interface ScoreInputFormProps {
   scores: Record<string, DimensionScore>
@@ -32,14 +35,24 @@ export function ScoreInputForm({ scores, onScoresChange }: ScoreInputFormProps) 
       </p>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <ScaleToggle scale={scale} onScaleChange={setScale} />
-            <button
-              className="text-sm px-3 py-1.5 rounded border border-input bg-background hover:bg-muted transition-colors"
-              onClick={resetNeutral}
-            >
-              Reset to neutral
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">Load profile:</span>
+              {REFERENCE_PROFILES.map((p) => (
+                <button
+                  key={p.id}
+                  className={btnCls}
+                  title="Fill the inputs with this example profile (preset only — not used for scoring)"
+                  onClick={() => onScoresChange({ ...p.scores })}
+                >
+                  {p.label}
+                </button>
+              ))}
+              <button className={btnCls} onClick={resetNeutral}>
+                Reset to neutral
+              </button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-0">
