@@ -29,6 +29,9 @@ function validateConfig(c: unknown): { ok: true; config: ModelConfig } | { ok: f
   for (const phaseId of PHASE_ORDER) {
     const phase = (cfg.phases as Record<string, unknown>)[phaseId];
     if (!phase || typeof phase !== 'object') return { ok: false, error: `Missing phase: ${phaseId}` };
+    if ((phase as { phaseId?: string }).phaseId !== phaseId) {
+      return { ok: false, error: `Phase ${phaseId} has mismatched phaseId` };
+    }
     const dims = (phase as { dimensions?: Record<string, unknown> }).dimensions;
     if (!dims || typeof dims !== 'object') return { ok: false, error: `Phase ${phaseId} missing dimensions` };
     for (const dim of DIMENSIONS) {
@@ -40,6 +43,10 @@ function validateConfig(c: unknown): { ok: true; config: ModelConfig } | { ok: f
       if (!WEIGHT_TIERS.includes(cell.weight as WeightTier)) {
         return { ok: false, error: `${phaseId}.${dim.id} weight invalid` };
       }
+    }
+    // Reject stray dimension keys so they can't be scored and skew the result.
+    if (Object.keys(dims).length !== DIMENSIONS.length) {
+      return { ok: false, error: `Phase ${phaseId} has unexpected dimension keys` };
     }
   }
 

@@ -9,6 +9,9 @@ import {
   WEIGHT_VALUES,
 } from '@/types/greiner';
 import { classify } from '@/engine/classifier';
+import { DIMENSION_IDS } from '@/data/defaultConfig';
+
+const NEUTRAL_CELL = { target: 0 as DimensionScore, weight: 'Neutral' as const, rationale: '' };
 
 const SCALE_SPAN = 6; // -3..+3
 
@@ -61,8 +64,10 @@ export function computePhaseFit(
   const dimensionDetails: DimensionDetail[] = [];
   const criticalMismatches: DimensionId[] = [];
 
-  for (const dimId of Object.keys(phase.dimensions) as DimensionId[]) {
-    const cell = phase.dimensions[dimId];
+  // Iterate the canonical 14 dimensions only — ignore any stray keys an
+  // imported config might carry, and tolerate a missing one as Neutral.
+  for (const dimId of DIMENSION_IDS) {
+    const cell = phase.dimensions[dimId] ?? NEUTRAL_CELL;
     const score = (scores[dimId] ?? 0) as DimensionScore;
     const weight = WEIGHT_VALUES[cell.weight];
     const fit = dimensionFit(score, cell.target, penalty);
@@ -115,7 +120,10 @@ export function computeAllPhases(
   config: ModelConfig,
   phaseOrder: FitResult['phaseId'][],
 ): FitResult[] {
-  return phaseOrder.map(phaseId =>
-    computePhaseFit(scores, config.phases[phaseId], config.scoring, config.bands),
-  );
+  // The map key is authoritative for identity — override any mismatched
+  // nested phaseId so results, lookups and React keys stay correct.
+  return phaseOrder.map(phaseId => ({
+    ...computePhaseFit(scores, config.phases[phaseId], config.scoring, config.bands),
+    phaseId,
+  }));
 }

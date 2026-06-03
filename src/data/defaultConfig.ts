@@ -20,7 +20,7 @@ import {
  * Phase 6 (Alliances) is theory-extrapolated (Greiner has no table for it).
  */
 
-const ALL_DIMENSIONS: DimensionId[] = [
+export const DIMENSION_IDS: DimensionId[] = [
   'analytical_intuitive',
   'conceptual_practical',
   'decisive_deliberate',
@@ -48,7 +48,7 @@ function phase(
   extrapolated = false,
 ): PhaseConfig {
   const dimensions = {} as Record<DimensionId, PhaseDimensionConfig>;
-  for (const id of ALL_DIMENSIONS) {
+  for (const id of DIMENSION_IDS) {
     const o = overrides[id];
     dimensions[id] = o
       ? { target: o[0], weight: o[1], rationale: o[2] }

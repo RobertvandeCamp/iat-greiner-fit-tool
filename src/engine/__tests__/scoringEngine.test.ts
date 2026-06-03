@@ -130,6 +130,23 @@ describe('computeAllPhases', () => {
     expect(res.criticalMismatches).toContain('careful_flexible');
   });
 
+  it('uses the map key as the authoritative phaseId (ignores nested mismatch)', () => {
+    const cfg = cloneDefaultConfig();
+    (cfg.phases.Creativity as { phaseId: string }).phaseId = 'Direction';
+    const results = computeAllPhases(neutral, cfg, PHASE_ORDER);
+    expect(results[0].phaseId).toBe('Creativity');
+    expect(new Set(results.map((r) => r.phaseId)).size).toBe(6);
+  });
+
+  it('ignores stray dimension keys when scoring', () => {
+    const cfg = cloneDefaultConfig();
+    (cfg.phases.Creativity.dimensions as Record<string, unknown>).bogus = {
+      target: 3, weight: 'Critical', rationale: '',
+    };
+    const res = computePhaseFit(idealFor('Creativity'), cfg.phases.Creativity, cfg.scoring, cfg.bands);
+    expect(res.fitPercent).toBe(100);
+  });
+
   it('floor normalization lowers a neutral profile vs raw', () => {
     const cfg = cloneDefaultConfig();
     const withFloor = computePhaseFit(neutral, cfg.phases.Creativity, { ...cfg.scoring, floorNormalize: true }, cfg.bands);
