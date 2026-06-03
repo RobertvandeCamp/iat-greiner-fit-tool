@@ -60,10 +60,26 @@ function BandsEditor() {
   const { config, updateBands } = useConfig();
   const bands = config.bands;
 
+  // Local draft for the min inputs so partial typing (e.g. clearing "75") does
+  // not push transient low thresholds into the live config / localStorage.
+  const [minDraft, setMinDraft] = useState<Record<number, string>>({});
+
   function patch(i: number, p: Partial<ClassificationBand>) {
-    const next = bands.map((b, idx) => (idx === i ? { ...b, ...p } : b));
-    updateBands(next);
+    updateBands(bands.map((b, idx) => (idx === i ? { ...b, ...p } : b)));
   }
+
+  function commitMin(i: number) {
+    const draft = minDraft[i];
+    if (draft === undefined) return;
+    const n = Number(draft);
+    const clamped = Number.isFinite(n) && draft.trim() !== '' ? Math.max(0, Math.min(100, Math.round(n))) : bands[i].min;
+    setMinDraft((d) => { const next = { ...d }; delete next[i]; return next; });
+    if (clamped !== bands[i].min) patch(i, { min: clamped });
+  }
+
+  const mins = bands.map((b) => b.min);
+  const hasDupes = new Set(mins).size !== mins.length;
+  const hasCatchAll = mins.includes(0);
 
   return (
     <Card>
@@ -86,12 +102,11 @@ function BandsEditor() {
                     type="number"
                     min={0}
                     max={100}
-                    value={b.min}
+                    value={minDraft[i] ?? String(b.min)}
                     className={`${inputCls} w-20`}
-                    onChange={(e) => {
-                      const n = Number(e.target.value)
-                      patch(i, { min: Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 0 })
-                    }}
+                    onChange={(e) => setMinDraft((d) => ({ ...d, [i]: e.target.value }))}
+                    onBlur={() => commitMin(i)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
                   />
                 </td>
                 <td className="py-1.5">
@@ -107,8 +122,14 @@ function BandsEditor() {
           </tbody>
         </table>
         <p className="text-xs text-muted-foreground mt-2">
-          Bands are matched highest-min first; the lowest min acts as the catch-all.
+          Bands are matched highest-min first; the band with min 0 is the catch-all. Edits to min apply on blur.
         </p>
+        {!hasCatchAll && (
+          <p className="text-xs text-amber-700 mt-1">⚠ No catch-all band (min 0) — scores below the lowest band show no label.</p>
+        )}
+        {hasDupes && (
+          <p className="text-xs text-amber-700 mt-1">⚠ Duplicate minimums — classification is ambiguous; make each min unique.</p>
+        )}
       </CardContent>
     </Card>
   );

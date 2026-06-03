@@ -30,6 +30,7 @@ export function ResultsPanel({ scores }: ResultsPanelProps) {
   )
 
   const target = targetPhase === 'none' ? null : results.find((r) => r.phaseId === targetPhase) ?? null
+  const tiedForTop = ranked.filter((r) => r.fitPercent === ranked[0].fitPercent)
 
   if (allZero) {
     return (
@@ -55,7 +56,11 @@ export function ResultsPanel({ scores }: ResultsPanelProps) {
 
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm font-medium">Best fit:</span>
-        <span className="text-sm">{ranked[0].phaseName}</span>
+        <span className="text-sm">
+          {tiedForTop.length > 1
+            ? `Tie: ${tiedForTop.map((r) => r.phaseName).join(', ')}`
+            : ranked[0].phaseName}
+        </span>
         <ClassificationBadge fitPercent={ranked[0].fitPercent} classification={ranked[0].classification} />
         <div className="ml-auto flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Target phase:</span>

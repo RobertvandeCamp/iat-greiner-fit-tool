@@ -52,14 +52,27 @@ function validateConfig(c: unknown): { ok: true; config: ModelConfig } | { ok: f
 
   if (!Array.isArray(cfg.bands) || cfg.bands.length === 0) return { ok: false, error: 'Missing/empty bands' };
   for (const b of cfg.bands) {
-    if (!Number.isFinite(b?.min) || typeof b?.label !== 'string') {
-      return { ok: false, error: 'Each band needs a finite numeric min and a string label' };
+    if (!Number.isFinite(b?.min) || b.min < 0 || b.min > 100 || typeof b?.label !== 'string') {
+      return { ok: false, error: 'Each band needs a numeric min in 0..100 and a string label' };
     }
+  }
+  const mins = cfg.bands.map((b) => b.min);
+  if (new Set(mins).size !== mins.length) {
+    return { ok: false, error: 'Band minimums must be unique' };
+  }
+  if (!mins.includes(0)) {
+    return { ok: false, error: 'Bands need a catch-all with min 0' };
   }
 
   const s = cfg.scoring as Partial<ScoringOptions> | undefined;
-  if (!s || !Number.isFinite(s.wrongPolePenalty) || typeof s.floorNormalize !== 'boolean') {
-    return { ok: false, error: 'scoring needs a finite wrongPolePenalty and a boolean floorNormalize' };
+  if (
+    !s ||
+    !Number.isFinite(s.wrongPolePenalty) ||
+    (s.wrongPolePenalty as number) < 0 ||
+    (s.wrongPolePenalty as number) > 1 ||
+    typeof s.floorNormalize !== 'boolean'
+  ) {
+    return { ok: false, error: 'scoring needs wrongPolePenalty in 0..1 and a boolean floorNormalize' };
   }
 
   return { ok: true, config: cfg as ModelConfig };

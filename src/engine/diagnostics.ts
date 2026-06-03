@@ -59,7 +59,9 @@ export function confusionMatrix(config: ModelConfig): ConfusionMatrix {
       fits,
       topPhase: top.phaseId,
       ownFit,
-      diagonalIsTop: top.phaseId === archetype,
+      // own phase counts as "top" if it is tied for the highest fit, not only
+      // when it strictly wins the (earlier-phase-favouring) tie-break.
+      diagonalIsTop: ownFit >= bestOther,
       margin: ownFit - bestOther,
     };
   });
