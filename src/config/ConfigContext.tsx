@@ -51,8 +51,8 @@ function validateConfig(c: unknown): { ok: true; config: ModelConfig } | { ok: f
   }
 
   const s = cfg.scoring as Partial<ScoringOptions> | undefined;
-  if (!s || typeof s.wrongPolePenalty !== 'number' || typeof s.floorNormalize !== 'boolean') {
-    return { ok: false, error: 'scoring needs numeric wrongPolePenalty and boolean floorNormalize' };
+  if (!s || !Number.isFinite(s.wrongPolePenalty) || typeof s.floorNormalize !== 'boolean') {
+    return { ok: false, error: 'scoring needs a finite wrongPolePenalty and a boolean floorNormalize' };
   }
 
   return { ok: true, config: cfg as ModelConfig };

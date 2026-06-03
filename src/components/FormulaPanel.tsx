@@ -96,8 +96,8 @@ export function FormulaPanel({ scores }: FormulaPanelProps) {
           <h3 className="font-semibold text-base mb-2">Step 4: Classification</h3>
           <p className="text-sm leading-relaxed mb-2">The fit % is labelled using the configurable bands:</p>
           <div className="grid grid-cols-2 gap-2 mt-2 max-w-xs">
-            {[...config.bands].sort((a, b) => b.min - a.min).map((b) => (
-              <div key={b.label} className="contents">
+            {[...config.bands].sort((a, b) => b.min - a.min).map((b, i) => (
+              <div key={i} className="contents">
                 <div><ClassificationBadge fitPercent={b.min + 1} classification={b.label} /></div>
                 <div className="text-sm self-center">&ge; {b.min}%</div>
               </div>

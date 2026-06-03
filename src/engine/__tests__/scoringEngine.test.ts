@@ -6,6 +6,7 @@ import {
   computePhaseFit,
   computeAllPhases,
 } from '@/engine/scoringEngine';
+import { bandIndex } from '@/lib/bandColor';
 import { DEFAULT_CONFIG, DEFAULT_BANDS, PHASE_ORDER, cloneDefaultConfig } from '@/data/defaultConfig';
 import type { DimensionId, DimensionScore } from '@/types/greiner';
 
@@ -38,6 +39,19 @@ describe('classify with configurable bands', () => {
 
   it('returns — when below all bands (no catch-all)', () => {
     expect(classify(10, [{ min: 50, label: 'Pass' }])).toBe('—');
+  });
+});
+
+describe('bandIndex (colours follow configurable bands)', () => {
+  it('maps each default band to a distinct palette tier', () => {
+    expect(bandIndex(80, DEFAULT_BANDS)).toBe(0); // Sterke fit
+    expect(bandIndex(60, DEFAULT_BANDS)).toBe(1); // Goede fit
+    expect(bandIndex(45, DEFAULT_BANDS)).toBe(2); // Risicofit
+    expect(bandIndex(10, DEFAULT_BANDS)).toBe(3); // Mismatch
+  });
+  it('returns -1 below all bands and 0 for a single band', () => {
+    expect(bandIndex(10, [{ min: 50, label: 'Pass' }])).toBe(-1);
+    expect(bandIndex(60, [{ min: 50, label: 'Pass' }])).toBe(0);
   });
 });
 
