@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoreInputForm } from "@/components/ScoreInputForm";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import { PhaseConfigEditor } from "@/components/PhaseConfigEditor";
+import { DiagnosticsPanel } from "@/components/DiagnosticsPanel";
 import { FormulaPanel } from "@/components/FormulaPanel";
 import { ConfigProvider } from "@/config/ConfigContext";
 import type { DimensionScore } from "@/types/greiner";
@@ -33,7 +34,8 @@ export default function App() {
             <TabsTrigger value="input" className="gap-1.5"><span className={tabNum}>1</span> Score Input</TabsTrigger>
             <TabsTrigger value="results" className="gap-1.5"><span className={tabNum}>2</span> Results</TabsTrigger>
             <TabsTrigger value="config" className="gap-1.5"><span className={tabNum}>3</span> Model Configuration</TabsTrigger>
-            <TabsTrigger value="formula" className="gap-1.5"><span className={tabNum}>4</span> Formula</TabsTrigger>
+            <TabsTrigger value="diagnostics" className="gap-1.5"><span className={tabNum}>4</span> Diagnostics</TabsTrigger>
+            <TabsTrigger value="formula" className="gap-1.5"><span className={tabNum}>5</span> Formula</TabsTrigger>
           </TabsList>
           <TabsContent value="input">
             <ScoreInputForm scores={scores} onScoresChange={setScores} />
@@ -43,6 +45,9 @@ export default function App() {
           </TabsContent>
           <TabsContent value="config">
             <PhaseConfigEditor />
+          </TabsContent>
+          <TabsContent value="diagnostics">
+            <DiagnosticsPanel />
           </TabsContent>
           <TabsContent value="formula">
             <FormulaPanel scores={scores} />
