@@ -45,8 +45,8 @@ function validateConfig(c: unknown): { ok: true; config: ModelConfig } | { ok: f
 
   if (!Array.isArray(cfg.bands) || cfg.bands.length === 0) return { ok: false, error: 'Missing/empty bands' };
   for (const b of cfg.bands) {
-    if (typeof b?.min !== 'number' || typeof b?.label !== 'string') {
-      return { ok: false, error: 'Each band needs numeric min and string label' };
+    if (!Number.isFinite(b?.min) || typeof b?.label !== 'string') {
+      return { ok: false, error: 'Each band needs a finite numeric min and a string label' };
     }
   }
 

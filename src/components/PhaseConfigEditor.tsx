@@ -88,7 +88,10 @@ function BandsEditor() {
                     max={100}
                     value={b.min}
                     className={`${inputCls} w-20`}
-                    onChange={(e) => patch(i, { min: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const n = Number(e.target.value)
+                      patch(i, { min: Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 0 })
+                    }}
                   />
                 </td>
                 <td className="py-1.5">

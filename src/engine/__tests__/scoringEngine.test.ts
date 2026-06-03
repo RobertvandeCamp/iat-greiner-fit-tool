@@ -35,6 +35,10 @@ describe('classify with configurable bands', () => {
     expect(classify(60, bands)).toBe('Pass');
     expect(classify(10, bands)).toBe('Fail');
   });
+
+  it('returns — when below all bands (no catch-all)', () => {
+    expect(classify(10, [{ min: 50, label: 'Pass' }])).toBe('—');
+  });
 });
 
 describe('baseFit', () => {
