@@ -73,6 +73,7 @@ function BandsEditor() {
   }, [bands]);
 
   function patch(i: number, p: Partial<ClassificationBand>) {
+    setMinError(null);
     updateBands(bands.map((b, idx) => (idx === i ? { ...b, ...p } : b)));
   }
 
