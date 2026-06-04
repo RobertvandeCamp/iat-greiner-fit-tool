@@ -7,20 +7,16 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import type { FitResult, Classification } from '@/types/greiner'
+import type { FitResult } from '@/types/greiner'
+import { useConfig } from '@/config/ConfigContext'
+import { bandChartColor } from '@/lib/bandColor'
 
 interface PhaseRankingChartProps {
   results: FitResult[]
 }
 
-const CLASSIFICATION_COLORS: Record<Classification, { fill: string; stroke: string }> = {
-  'Sterke fit': { fill: '#dcfce7', stroke: '#166534' },
-  'Goede fit':  { fill: '#dbeafe', stroke: '#1e40af' },
-  'Risicofit':  { fill: '#fef3c7', stroke: '#92400e' },
-  'Mismatch':   { fill: '#fee2e2', stroke: '#991b1b' },
-}
-
 export function PhaseRankingChart({ results }: PhaseRankingChartProps) {
+  const { config } = useConfig()
   const data = results.map((r) => ({
     name: r.phaseName,
     value: r.fitPercent,
@@ -44,14 +40,10 @@ export function PhaseRankingChart({ results }: PhaseRankingChartProps) {
             }
           />
           <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive={false}>
-            {data.map((entry, index) => (
-              <Cell
-                key={index}
-                fill={CLASSIFICATION_COLORS[entry.classification as Classification].fill}
-                stroke={CLASSIFICATION_COLORS[entry.classification as Classification].stroke}
-                strokeWidth={1}
-              />
-            ))}
+            {data.map((entry, index) => {
+              const c = bandChartColor(entry.value, config.bands)
+              return <Cell key={index} fill={c.fill} stroke={c.stroke} strokeWidth={1} />
+            })}
           </Bar>
         </BarChart>
       </ResponsiveContainer>

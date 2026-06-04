@@ -1,5 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { useConfig } from '@/config/ConfigContext'
+import { bandTextClass } from '@/lib/bandColor'
 import type { Classification } from '@/types/greiner'
 
 interface ClassificationBadgeProps {
@@ -7,20 +9,10 @@ interface ClassificationBadgeProps {
   classification: Classification
 }
 
-const BADGE_CLASSES: Record<Classification, string> = {
-  'Sterke fit': 'bg-green-100 text-green-800 border-green-200',
-  'Goede fit':  'bg-blue-100 text-blue-800 border-blue-200',
-  'Risicofit':  'bg-amber-100 text-amber-800 border-amber-200',
-  'Mismatch':   'bg-red-100 text-red-800 border-red-200',
-}
-
 export function ClassificationBadge({ fitPercent, classification }: ClassificationBadgeProps) {
+  const { config } = useConfig()
   return (
-    <Badge
-      variant="outline"
-      className={cn(BADGE_CLASSES[classification])}
-      role="status"
-    >
+    <Badge variant="outline" className={cn(bandTextClass(fitPercent, config.bands))} role="status">
       {fitPercent}% {classification}
     </Badge>
   )
