@@ -8,7 +8,7 @@ import {
   ScoringOptions,
   WeightTier,
 } from '@/types/greiner';
-import { cloneDefaultConfig, PHASE_ORDER } from '@/data/defaultConfig';
+import { cloneDefaultConfig, PHASE_ORDER, DEFAULT_BANDS } from '@/data/defaultConfig';
 import { DIMENSIONS } from '@/data/dimensions';
 
 const STORAGE_KEY = 'greiner-config-v1';
@@ -100,32 +100,39 @@ const ConfigContext = createContext<ConfigContextValue | null>(null);
  */
 function repairSoftFields(parsed: ModelConfig): ModelConfig {
   const cfg: ModelConfig = { ...parsed };
-  if (cfg.scoring && Number.isFinite(cfg.scoring.wrongPolePenalty)) {
-    cfg.scoring = { ...cfg.scoring, wrongPolePenalty: Math.max(0, Math.min(1, cfg.scoring.wrongPolePenalty)) };
-  }
-  if (Array.isArray(cfg.bands)) {
-    const seen = new Set<number>();
-    let bands: ClassificationBand[] = cfg.bands
-      .filter((b) => b && Number.isFinite(b.min) && typeof b.label === 'string')
-      .map((b) => ({ min: Math.max(0, Math.min(100, Math.round(b.min))), label: b.label }))
+
+  // Scoring: clamp/repair to valid values (default rather than drop the config).
+  const rawPenalty = cfg.scoring?.wrongPolePenalty;
+  cfg.scoring = {
+    wrongPolePenalty: Number.isFinite(rawPenalty) ? Math.max(0, Math.min(1, rawPenalty as number)) : 0,
+    floorNormalize: typeof cfg.scoring?.floorNormalize === 'boolean' ? cfg.scoring.floorNormalize : true,
+  };
+
+  // Bands: clamp/round, drop dupes, ensure a min-0 catch-all.
+  const seen = new Set<number>();
+  let bands: ClassificationBand[] = (Array.isArray(cfg.bands) ? cfg.bands : [])
+    .filter((b) => b && Number.isFinite(b.min) && typeof b.label === 'string')
+    .map((b) => ({ min: Math.max(0, Math.min(100, Math.round(b.min))), label: b.label }))
+    .filter((b) => {
+      if (seen.has(b.min)) return false;
+      seen.add(b.min);
+      return true;
+    });
+  if (bands.length > 0 && !bands.some((b) => b.min === 0)) {
+    const lowestIdx = bands.reduce((mi, b, i, arr) => (b.min < arr[mi].min ? i : mi), 0);
+    const seen2 = new Set<number>();
+    bands = bands
+      .map((b, i) => (i === lowestIdx ? { ...b, min: 0 } : b))
       .filter((b) => {
-        if (seen.has(b.min)) return false;
-        seen.add(b.min);
+        if (seen2.has(b.min)) return false;
+        seen2.add(b.min);
         return true;
       });
-    if (bands.length > 0 && !bands.some((b) => b.min === 0)) {
-      const lowestIdx = bands.reduce((mi, b, i, arr) => (b.min < arr[mi].min ? i : mi), 0);
-      const seen2 = new Set<number>();
-      bands = bands
-        .map((b, i) => (i === lowestIdx ? { ...b, min: 0 } : b))
-        .filter((b) => {
-          if (seen2.has(b.min)) return false;
-          seen2.add(b.min);
-          return true;
-        });
-    }
-    cfg.bands = bands;
   }
+  // If nothing usable survived, fall back to the default band set rather than
+  // discarding the (valuable) phase calibration.
+  cfg.bands = bands.length > 0 ? bands : DEFAULT_BANDS.map((b) => ({ ...b }));
+
   return cfg;
 }
 
