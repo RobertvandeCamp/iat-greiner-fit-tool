@@ -63,6 +63,7 @@ function BandsEditor() {
   // Local draft for the min inputs so partial typing (e.g. clearing "75") does
   // not push transient low thresholds into the live config / localStorage.
   const [minDraft, setMinDraft] = useState<Record<number, string>>({});
+  const [minError, setMinError] = useState<string | null>(null);
 
   function patch(i: number, p: Partial<ClassificationBand>) {
     updateBands(bands.map((b, idx) => (idx === i ? { ...b, ...p } : b)));
@@ -74,7 +75,14 @@ function BandsEditor() {
     const n = Number(draft);
     const clamped = Number.isFinite(n) && draft.trim() !== '' ? Math.max(0, Math.min(100, Math.round(n))) : bands[i].min;
     setMinDraft((d) => { const next = { ...d }; delete next[i]; return next; });
-    if (clamped !== bands[i].min) patch(i, { min: clamped });
+    if (clamped === bands[i].min) return;
+    // Reject a duplicate min so the live config (and classify) stays unambiguous.
+    if (bands.some((b, idx) => idx !== i && b.min === clamped)) {
+      setMinError(`Min ${clamped}% is already used — keep band minimums unique.`);
+      return;
+    }
+    setMinError(null);
+    patch(i, { min: clamped });
   }
 
   const mins = bands.map((b) => b.min);
@@ -104,7 +112,7 @@ function BandsEditor() {
                     max={100}
                     value={minDraft[i] ?? String(b.min)}
                     className={`${inputCls} w-20`}
-                    onChange={(e) => setMinDraft((d) => ({ ...d, [i]: e.target.value }))}
+                    onChange={(e) => { setMinError(null); setMinDraft((d) => ({ ...d, [i]: e.target.value })) }}
                     onBlur={() => commitMin(i)}
                     onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
                   />
@@ -130,6 +138,7 @@ function BandsEditor() {
         {hasDupes && (
           <p className="text-xs text-amber-700 mt-1">⚠ Duplicate minimums — classification is ambiguous; make each min unique.</p>
         )}
+        {minError && <p className="text-xs text-amber-700 mt-1">⚠ {minError}</p>}
       </CardContent>
     </Card>
   );
