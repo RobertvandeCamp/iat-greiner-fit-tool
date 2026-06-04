@@ -3,25 +3,26 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { useConfig } from '@/config/ConfigContext'
 import { confusionMatrix, winnerDistribution } from '@/engine/diagnostics'
 import { PHASE_ORDER } from '@/data/defaultConfig'
+import { bandTextClass } from '@/lib/bandColor'
 import { cn } from '@/lib/utils'
 
 const MC_N = 2000
 
-function cellTone(pct: number): string {
-  if (pct >= 75) return 'bg-green-100 text-green-900'
-  if (pct >= 55) return 'bg-blue-50 text-blue-900'
-  if (pct >= 40) return 'bg-amber-50 text-amber-900'
-  return 'bg-red-50 text-red-900'
+interface DiagnosticsPanelProps {
+  /** Only compute when the Diagnostics tab is active (Monte-Carlo is heavy). */
+  active: boolean
 }
 
-export function DiagnosticsPanel() {
+export function DiagnosticsPanel({ active }: DiagnosticsPanelProps) {
   const { config } = useConfig()
   const [seed, setSeed] = useState(12345)
 
-  const cm = useMemo(() => confusionMatrix(config), [config])
-  const wd = useMemo(() => winnerDistribution(config, MC_N, seed), [config, seed])
+  const cm = useMemo(() => (active ? confusionMatrix(config) : null), [config, active])
+  const wd = useMemo(() => (active ? winnerDistribution(config, MC_N, seed) : null), [config, seed, active])
 
   const short = (p: string) => p.slice(0, 4)
+
+  if (!cm || !wd) return null
 
   return (
     <div className="space-y-6">
@@ -47,7 +48,8 @@ export function DiagnosticsPanel() {
           <p className="text-xs text-muted-foreground mb-2 leading-relaxed">
             Each row feeds a phase&apos;s <em>ideal</em> profile (its target vector) through the model.
             A well-tuned model puts the highest score on the diagonal (own phase) — bold cells. ✓ = the
-            row&apos;s top phase is its own; ⚠ = it loses to a rival.
+            row&apos;s top phase is its own; ⚠ = it loses to a rival. Cell colours follow the active
+            classification bands.
           </p>
           <div className="overflow-x-auto">
             <table className="text-sm border-collapse">
@@ -70,7 +72,7 @@ export function DiagnosticsPanel() {
                       return (
                         <td
                           key={p}
-                          className={cn('p-1.5 text-center tabular-nums', cellTone(v), isDiag && 'font-bold ring-1 ring-inset ring-primary/40')}
+                          className={cn('p-1.5 text-center tabular-nums', bandTextClass(v, config.bands), isDiag && 'font-bold ring-1 ring-inset ring-primary/40')}
                         >
                           {v}
                         </td>

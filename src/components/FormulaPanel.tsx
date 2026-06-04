@@ -98,7 +98,7 @@ export function FormulaPanel({ scores }: FormulaPanelProps) {
           <div className="grid grid-cols-2 gap-2 mt-2 max-w-xs">
             {[...config.bands].sort((a, b) => b.min - a.min).map((b, i) => (
               <div key={i} className="contents">
-                <div><ClassificationBadge fitPercent={b.min + 1} classification={b.label} /></div>
+                <div><ClassificationBadge fitPercent={Math.min(b.min + 1, 100)} classification={b.label} /></div>
                 <div className="text-sm self-center">&ge; {b.min}%</div>
               </div>
             ))}

@@ -17,6 +17,7 @@ const tabNum = "rounded-full bg-primary text-primary-foreground w-4 h-4 flex ite
 
 export default function App() {
   const [scores, setScores] = useState<Record<string, DimensionScore>>(neutralScores);
+  const [tab, setTab] = useState("input");
 
   return (
     <ConfigProvider>
@@ -29,7 +30,7 @@ export default function App() {
           targets, weights and bands in Model Configuration and watch the results update live.
         </p>
 
-        <Tabs defaultValue="input">
+        <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="input" className="gap-1.5"><span className={tabNum}>1</span> Score Input</TabsTrigger>
             <TabsTrigger value="results" className="gap-1.5"><span className={tabNum}>2</span> Results</TabsTrigger>
@@ -47,7 +48,7 @@ export default function App() {
             <PhaseConfigEditor />
           </TabsContent>
           <TabsContent value="diagnostics">
-            <DiagnosticsPanel />
+            <DiagnosticsPanel active={tab === "diagnostics"} />
           </TabsContent>
           <TabsContent value="formula">
             <FormulaPanel scores={scores} />
