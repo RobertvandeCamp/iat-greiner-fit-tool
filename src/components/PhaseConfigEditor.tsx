@@ -57,7 +57,7 @@ function ScoringOptionsEditor() {
 }
 
 function BandsEditor() {
-  const { config, updateBands } = useConfig();
+  const { config, updateBands, configEpoch } = useConfig();
   const bands = config.bands;
 
   // Local draft for the min inputs so partial typing (e.g. clearing "75") does
@@ -65,12 +65,13 @@ function BandsEditor() {
   const [minDraft, setMinDraft] = useState<Record<number, string>>({});
   const [minError, setMinError] = useState<string | null>(null);
 
-  // Drop any in-progress min drafts when the bands change identity (reset to
-  // defaults / JSON import), so a stale draft can't be committed over the new config.
+  // Drop any in-progress min drafts only on a wholesale config replacement
+  // (reset to defaults / JSON import) — NOT on normal in-editor band edits —
+  // so a stale draft can't be committed over the new config.
   useEffect(() => {
     setMinDraft({});
     setMinError(null);
-  }, [bands]);
+  }, [configEpoch]);
 
   function patch(i: number, p: Partial<ClassificationBand>) {
     setMinError(null);

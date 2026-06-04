@@ -80,6 +80,7 @@ function validateConfig(c: unknown): { ok: true; config: ModelConfig } | { ok: f
 
 interface ConfigContextValue {
   config: ModelConfig;
+  configEpoch: number; // bumps only on reset/import/replace
   isDirty: boolean; // differs from default
   updateDimension: (phase: GreinerPhase, dim: DimensionId, patch: Partial<PhaseDimensionConfig>) => void;
   updateBands: (bands: ClassificationBand[]) => void;
@@ -155,6 +156,9 @@ function loadInitial(): ModelConfig {
 
 export function ConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<ModelConfig>(loadInitial);
+  // Bumped only on wholesale replacement (reset / import / replace) — NOT on
+  // in-editor field edits — so consumers can clear local input drafts precisely.
+  const [configEpoch, setConfigEpoch] = useState(0);
 
   useEffect(() => {
     try {
@@ -196,9 +200,15 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     setConfig(prev => ({ ...prev, scoring: { ...prev.scoring, ...patch } }));
   }, []);
 
-  const resetToDefaults = useCallback(() => setConfig(cloneDefaultConfig()), []);
+  const resetToDefaults = useCallback(() => {
+    setConfig(cloneDefaultConfig());
+    setConfigEpoch((e) => e + 1);
+  }, []);
 
-  const replaceConfig = useCallback((c: ModelConfig) => setConfig(c), []);
+  const replaceConfig = useCallback((c: ModelConfig) => {
+    setConfig(c);
+    setConfigEpoch((e) => e + 1);
+  }, []);
 
   const exportConfig = useCallback(() => {
     const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
@@ -221,12 +231,14 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     const result = validateConfig(parsed);
     if (!result.ok) return { ok: false, error: result.error };
     setConfig(result.config);
+    setConfigEpoch((e) => e + 1);
     return { ok: true };
   }, []);
 
   const value = useMemo(
     () => ({
       config,
+      configEpoch,
       isDirty,
       updateDimension,
       updateBands,
@@ -236,7 +248,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
       importConfig,
       replaceConfig,
     }),
-    [config, isDirty, updateDimension, updateBands, updateScoring, resetToDefaults, exportConfig, importConfig, replaceConfig],
+    [config, configEpoch, isDirty, updateDimension, updateBands, updateScoring, resetToDefaults, exportConfig, importConfig, replaceConfig],
   );
 
   return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>;
