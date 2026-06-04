@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -64,6 +64,13 @@ function BandsEditor() {
   // not push transient low thresholds into the live config / localStorage.
   const [minDraft, setMinDraft] = useState<Record<number, string>>({});
   const [minError, setMinError] = useState<string | null>(null);
+
+  // Drop any in-progress min drafts when the bands change identity (reset to
+  // defaults / JSON import), so a stale draft can't be committed over the new config.
+  useEffect(() => {
+    setMinDraft({});
+    setMinError(null);
+  }, [bands]);
 
   function patch(i: number, p: Partial<ClassificationBand>) {
     updateBands(bands.map((b, idx) => (idx === i ? { ...b, ...p } : b)));
