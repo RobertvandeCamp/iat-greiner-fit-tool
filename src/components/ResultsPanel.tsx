@@ -5,6 +5,7 @@ import { useConfig } from '@/config/ConfigContext'
 import { PhaseRankingChart } from '@/components/PhaseRankingChart'
 import { PhaseCard } from '@/components/PhaseCard'
 import { ClassificationBadge } from '@/components/ClassificationBadge'
+import { ScoringHelp } from '@/components/ScoringHelp'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -53,6 +54,8 @@ export function ResultsPanel({ scores }: ResultsPanelProps) {
           the org&apos;s current phase, or read the ranking to see where the person fits best.
         </p>
       </div>
+
+      <ScoringHelp />
 
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm font-medium">Best fit:</span>

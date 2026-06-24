@@ -4,6 +4,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useConfig } from '@/config/ConfigContext';
+import { ScoringHelp } from '@/components/ScoringHelp';
 import { DIMENSIONS } from '@/data/dimensions';
 import { PHASE_ORDER } from '@/data/defaultConfig';
 import type { DimensionScore, WeightTier, ClassificationBand } from '@/types/greiner';
@@ -205,6 +206,8 @@ export function PhaseConfigEditor() {
         </p>
       </div>
 
+      <ScoringHelp defaultOpen />
+
       <ConfigToolbar />
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -226,10 +229,10 @@ export function PhaseConfigEditor() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-muted-foreground text-xs border-b border-border">
-                    <th className="text-left py-1">Dimension (− left / + right)</th>
-                    <th className="text-left py-1 w-20">Target</th>
-                    <th className="text-left py-1 w-32">Weight</th>
-                    <th className="text-left py-1">Rationale</th>
+                    <th className="text-left py-1" title="The trait. −3 = strongly the left pole, +3 = strongly the right pole.">Dimension (− left / + right)</th>
+                    <th className="text-left py-1 w-20" title="What this phase wants: which side (−/+) and how strongly. 0 = doesn't matter.">Target</th>
+                    <th className="text-left py-1 w-32" title="How much this trait counts: Critical (×3), Supporting (×1), Neutral (×0, ignored).">Weight</th>
+                    <th className="text-left py-1" title="Why — a note for you. Does not affect the score.">Rationale</th>
                   </tr>
                 </thead>
                 <tbody>
