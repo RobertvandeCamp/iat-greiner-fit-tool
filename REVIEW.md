@@ -24,17 +24,22 @@ review only.
 ## What "Important" means here (fix before merge)
 
 - **Correctness:** incorrect logic, unhandled edge cases, broken error/loading
-  states, race conditions in async effects, stale closures over state.
+  states, race conditions in async effects, stale closures over state; floating
+  promises — an async call that is neither awaited nor explicitly handled
+  silently drops its errors.
 - **React safety:** side effects inside render or inside state updaters (updaters
   must be pure); unstable list keys or array-index keys; component definitions
   nested inside another component; unstable Context values that re-render the tree;
-  timers/listeners/subscriptions not cleared on unmount.
+  timers/listeners/subscriptions not cleared on unmount; hooks called
+  conditionally, in loops, or after an early return; incomplete dependency
+  arrays in `useEffect`/`useMemo`/`useCallback`.
 - **Contracts:** an external boundary (Supabase, API, form input) without schema
   validation (Zod), or types not derived from the schema. `any` or unsafe casts
   that silence the type checker at a boundary.
 - **Security:** secrets or service-role keys exposed to the client; user input
   rendered without sanitization (XSS); open redirects from user-controlled URLs;
-  trusting client-side checks for authorization. Mutations and inputs are
+  trusting client-side checks for authorization; `Math.random()` for tokens or
+  ids in a security context (use the platform CSPRNG). Mutations and inputs are
   validated server-side, not only in the UI.
 - **Data scope:** queries not scoped to the caller's tenant/company; PII shown or
   logged where it should not be.
@@ -72,6 +77,7 @@ review only.
 - Expensive or frequent user input (search, resize, scroll) is debounced or
   throttled, and the work is torn down on unmount.
 - No secret or privileged key reaches the client bundle.
+- No stray `console.log` left in production code paths.
 
 ## Verification bar
 
