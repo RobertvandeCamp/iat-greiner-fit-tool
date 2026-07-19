@@ -25,14 +25,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          # Full history, niet fetch-depth: 1. Op depth 1 bestaat er maar een commit,
+          # dus git diff/log/show kunnen niet tegen de base vergelijken — de reviewer
+          # kreeg tools die niet konden werken. Zie de claude_args-comment hieronder.
+          fetch-depth: 0
 
       - name: Claude Code Review
+        id: claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Keep the other PR bot's comments out of Claude's context.
-          exclude_comments_by_actor: "kody-ai"
+          exclude_comments_by_actor: "cursor[bot]"
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -42,11 +46,54 @@ jobs:
             CLAUDE.md conventions. Add inline comments on specific lines and use a
             top-level comment for the summary.
           # Cost control (--max-turns) + tools to READ code and post comments.
-          # Les uit bratra-action-order-bc-sync (2026-07-01): --max-turns 15 (en zelfs
-          # 40) liep dood op error_max_turns omdat de allowlist GEEN leestoegang gaf —
-          # de reviewer verbrandde turns op permission-denials zonder de gewijzigde
-          # bestanden te kunnen lezen. Read-only lees-tools (Read/Grep/Glob/git diff)
-          # zijn essentieel; 40 turns geeft daarbij ruime marge.
+          #
+          # error_max_turns is bijna nooit een budgetprobleem — het is een
+          # allowlist-probleem. De reviewer verbrandt turns op permission-denials en
+          # raakt de cap. Verhoog daarom NOOIT alleen --max-turns; kijk eerst naar
+          # permission_denials_count.
+          #
+          # Les 1 — bratra-action-order-bc-sync (2026-07-01): --max-turns 15 (en zelfs
+          # 40) liep dood op error_max_turns omdat de allowlist GEEN leestoegang gaf.
+          # Read/Grep/Glob toegevoegd.
+          # Les 2 — money-masters bankfiles-to-csv-service PR #17 (2026-07-16), run
+          # 29504885153: nog steeds dood op error_max_turns. Meting uit de run:
+          # num_turns 41 (cap 40), permission_denials_count 13, total_cost_usd 0.89
+          # voor NUL review-output. Een derde van het budget ging op aan geweigerde
+          # calls. Twee gaten gedicht:
+          #   * git log/show — een re-review moet zien wat er veranderd is sinds de
+          #     commit die hij zelf al besproken heeft; git diff alleen kan dat niet.
+          #     Vereist fetch-depth: 0 (zie checkout hierboven), anders geef je tools
+          #     die niet kunnen werken.
+          #   * gh api — gh pr view geeft GEEN inline review comments terug; zonder
+          #     dit kan de reviewer zijn eigen eerdere opmerkingen niet lezen en
+          #     dubbelt hij. BEWUST NAUW GESCOPED op precies dat leespad, niet
+          #     Bash(gh api:*): de prompt van deze job bevat door de PR-auteur
+          #     bestuurde tekst (titel, body, diff), dus een geslaagde prompt-
+          #     injection zou met een ongelimiteerde grant een WRITE-primitive
+          #     worden (PR mergen, reviews dismissen) op alles wat de
+          #     pull-requests: write token kan bereiken. Rest-risico: het pad laat
+          #     nog steeds schrijven op de comments van deze ene PR toe — dat is
+          #     bewust geaccepteerd, want gh pr comment + de inline-comment MCP-tool
+          #     geven die mogelijkheid toch al.
+          #
+          # GEZONDHEIDSMETRIEK: permission_denials_count (~0), niet pass/fail. Groen
+          # met 13 denials is een PR verwijderd van de cliff. Lees hem uit het
+          # claude-execution-output.json artifact (zie de upload-stap hieronder).
+          # 60 turns is plafond, geen doel: een run die 25 turns nodig heeft kost 25.
           claude_args: |
-            --max-turns 40
-            --allowedTools "Read,Grep,Glob,Bash(git diff:*),mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --max-turns 60
+            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(git show:*),mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments:*)"
+
+      # Maakt een volgende error_max_turns diagnostiseerbaar: dit JSON-bestand bevat
+      # num_turns, permission_denials_count en total_cost_usd. Zonder dit artifact is
+      # "welke tools werden geweigerd?" niet te beantwoorden en blijft elke allowlist-
+      # fix giswerk (precies het probleem bij PR #17). if: always() — juist de
+      # gefaalde run is de interessante.
+      - name: Upload Claude execution log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-execution-output
+          path: ${{ runner.temp }}/claude-execution-output.json
+          if-no-files-found: ignore
+          retention-days: 14
