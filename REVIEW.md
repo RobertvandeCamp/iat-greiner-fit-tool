@@ -19,7 +19,8 @@ review only.
 7. Fail-fast with high-signal errors — no silent fallbacks; structured logging.
 8. One consistent pattern per service type — converge on the canonical example.
 9. Backward-compatible and reversible by default — additive, with rollback.
-10. Navigable structure, descriptive names, intent where needed.
+10. Navigable structure, descriptive names, intent where needed; comments hold
+    only the current why and contract (no ids, history, or versions).
 
 ## What "Important" means here (fix before merge)
 
@@ -47,10 +48,17 @@ review only.
   contracts without an additive, optional-prop path.
 - **Consistency:** a second way to do something that already has a canonical
   component, hook, or pattern in the repo.
+- **Stale comments:** a comment or docstring that contradicts the code it
+  describes. Agents take comments literally; a wrong comment misleads the next
+  change. Fix the comment or remove it.
 
 ## Nit at most — cap at 5, then say "plus N similar items"
 
 - Naming, file structure, docstrings.
+- Comments that carry a plan, phase, ticket, decision, or review id (`D-07`,
+  `REQ-12`, `plan 10-02`), change history ("used to", "since X"), or a version
+  number: ask to rewrite them as the current rule. The id and the history
+  belong in the commit message.
 - Duplication that is not genuine shared logic. Apply the Rule of Three before
   flagging duplication; prefer duplication over the wrong abstraction.
 - Memoization opportunities where props/identities are stable.
